@@ -5,7 +5,8 @@ namespace Samurai.Models
 {
     public class Config
     {
-        public List<Dependency> Dependencies { get; set; }
+        public List<RemoteProject> Dependencies { get; set; }
+        public Project Self { get; set; }
 
         public string ReplaceVars(string str, string[] tuples)
         {
@@ -21,47 +22,16 @@ namespace Samurai.Models
             return str;
         }
 
-        string ReplaceWrongDirSepChar(string path, char wrongChar)
-        {
-            return path = path.Replace(wrongChar, Path.DirectorySeparatorChar);
-        }
-
         public void FixDirSeparatorInPaths()
         {
-            char wrongChar;
-            string os = Common.GetOs();
-            if (os == Common.OsIdWin)
-            {
-                wrongChar = '/';
-            }
-            else if (os == Common.OsIdUnix || os == Common.OsIdMacOS)
-            {
-                wrongChar = '\\';
-            }
-            else
-            {
-                return;
-            }
-
             foreach (var dep in Dependencies)
             {
-                if (dep.CMake != null)
-                {
-                    dep.CMake.SrcDir = ReplaceWrongDirSepChar(dep.CMake.SrcDir, wrongChar);
-                    dep.CMake.WorkingDir = ReplaceWrongDirSepChar(dep.CMake.WorkingDir, wrongChar);
-                }
-                if (dep.Build != null)
-                {
-                    dep.Build.WorkingDir = ReplaceWrongDirSepChar(dep.Build.WorkingDir, wrongChar);
-                    for (var i = 0; i < dep.Build.Scripts.Count; i++)
-                    {
-                        dep.Build.Scripts[i].Run = ReplaceWrongDirSepChar(dep.Build.Scripts[i].Run, wrongChar);
-                    }
-                }
-                if (dep.Patch != null)
-                {
-                    dep.Patch = ReplaceWrongDirSepChar(dep.Patch, wrongChar);
-                }
+                dep.FixDirSeparatorInPaths();
+            }
+
+            if (Self != null)
+            {
+                Self.FixDirSeparatorInPaths();
             }
         }
 

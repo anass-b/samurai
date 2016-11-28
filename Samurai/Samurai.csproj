@@ -84,8 +84,9 @@
     <Compile Include="src\Common.cs" />
     <Compile Include="src\Models\Config.cs" />
     <Compile Include="src\Controller.cs" />
-    <Compile Include="src\Models\Dependency.cs" />
+    <Compile Include="src\Models\Project.cs" />
     <Compile Include="src\Locations.cs" />
+    <Compile Include="src\Models\RemoteProject.cs" />
     <Compile Include="src\Program.cs" />
     <Compile Include="src\Models\Source.cs" />
   </ItemGroup>

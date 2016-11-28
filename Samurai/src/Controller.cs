@@ -15,9 +15,14 @@ namespace Samurai
             _config.FixDirSeparatorInPaths();
         }
 
-        CommandOption AddVarsOptions(CommandLineApplication target)
+        CommandOption AddVarsOption(CommandLineApplication target)
         {
             return target.Option("--vars|-v", "Variables", CommandOptionType.SingleValue);
+        }
+
+        CommandOption AddSelfOption(CommandLineApplication target)
+        {
+            return target.Option("--self|-s", "Run self section", CommandOptionType.NoValue);
         }
 
         public void AddFetchCli(CommandLineApplication cli)
@@ -25,7 +30,7 @@ namespace Samurai
             CommandOption vars = null;
             cli.Command("fetch", (command) =>
             {
-                vars = AddVarsOptions(command);
+                vars = AddVarsOption(command);
             })
             .OnExecute(() =>
             {
@@ -39,7 +44,7 @@ namespace Samurai
             CommandOption vars = null;
             cli.Command("patch", (command) =>
             {
-                vars = AddVarsOptions(command);
+                vars = AddVarsOption(command);
             })
             .OnExecute(() =>
             {
@@ -50,29 +55,45 @@ namespace Samurai
 
         public void AddCMakeCli(CommandLineApplication cli)
         {
-            CommandOption vars = null;
+            CommandOption vars = null, self = null;
             cli.Command("cmake", (command) =>
             {
-                vars = AddVarsOptions(command);
+                vars = AddVarsOption(command);
+                self = AddSelfOption(command);
             })
             .OnExecute(() =>
             {
                 _config.AssignVars(vars.Value());
-                return CMake();
+                if (self.HasValue())
+                {
+                    return SelfCMake();
+                }
+                else
+                {
+                    return CMake();
+                }
             });
         }
 
         public void AddBuildCli(CommandLineApplication cli)
         {
-            CommandOption vars = null;
+            CommandOption vars = null, self = null;
             cli.Command("build", (command) =>
             {
-                vars = AddVarsOptions(command);
+                vars = AddVarsOption(command);
+                self = AddSelfOption(command);
             })
             .OnExecute(() =>
             {
                 _config.AssignVars(vars.Value());
-                return Build();
+                if (self.HasValue())
+                {
+                    return SelfBuild();
+                }
+                else
+                {
+                    return Build();
+                }
             });
         }
 
@@ -81,7 +102,7 @@ namespace Samurai
             CommandOption vars = null;
             cli.Command("all", (command) =>
             {
-                vars = AddVarsOptions(command);
+                vars = AddVarsOption(command);
             })
             .OnExecute(() =>
             {
@@ -98,6 +119,8 @@ namespace Samurai
                 Patch();
                 CMake();
                 Build();
+                SelfCMake();
+                SelfBuild();
                 return 0;
             }
             catch (Exception e)
@@ -169,6 +192,20 @@ namespace Samurai
             }
         }
 
+        int SelfCMake()
+        {
+            try
+            {
+                _config.Self.RunCMake();
+                return 0;
+            }
+            catch (Exception e)
+            {
+                Common.PrintException(e);
+                return 1;
+            }
+        }
+
         int Build()
         {
             try
@@ -177,6 +214,20 @@ namespace Samurai
                 {
                     dep.RunBuild();
                 }
+                return 0;
+            }
+            catch (Exception e)
+            {
+                Common.PrintException(e);
+                return 1;
+            }
+        }
+
+        int SelfBuild()
+        {
+            try
+            {
+                _config.Self.RunBuild();
                 return 0;
             }
             catch (Exception e)
