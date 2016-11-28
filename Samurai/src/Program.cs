@@ -27,16 +27,12 @@ namespace Samurai
             }
             catch (FileNotFoundException)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"{Locations.ConfigFileName} not found.");
-                Console.ResetColor();
+                Common.PrintException($"{Locations.ConfigFileName} not found.");
                 return 1;
             }
             catch (Exception e)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(e.Message);
-                Console.Clear();
+                Common.PrintException(e);
                 return 1;
             }
 

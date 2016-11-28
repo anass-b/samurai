@@ -117,19 +117,46 @@ namespace Samurai.Models
         /// <param name="os">Os.</param>
         void RunBuildScriptForOs(string os)
         {
-            foreach (var script in Build.Scripts)
+            if (Build.Scripts != null)
             {
-                if (script.Os == os)
+                foreach (var script in Build.Scripts)
                 {
-                    string argsStr = "";
-                    foreach (var arg in script.Args)
+                    if (script.Os == os)
                     {
-                        argsStr += $" {arg}";
+                        string argsStr = "";
+                        if (script.Args != null)
+                        {
+                            foreach (var arg in script.Args)
+                            {
+                                argsStr += $" {arg}";
+                            }
+                        }
+                        string workingDir = Path.Combine(LocalPath, Build.WorkingDir);
+                        string scriptPath = Path.Combine(Environment.CurrentDirectory, script.Name);
+                        Common.RunCommand(scriptPath, argsStr.Trim(), workingDir);
+                        return;
                     }
-                    string workingDir = Path.Combine(LocalPath, Build.WorkingDir);
-                    string scriptPath = Path.Combine(Environment.CurrentDirectory, script.Run);
-                    Common.RunCommand(scriptPath, argsStr.Trim(), workingDir);
-                    return;
+                }
+            }
+
+            if (Build.Commands != null)
+            {
+                foreach (var command in Build.Commands)
+                {
+                    if (command.Os == os)
+                    {
+                        string argsStr = "";
+                        if (command.Args != null)
+                        {
+                            foreach (var arg in command.Args)
+                            {
+                                argsStr += $" {arg}";
+                            }
+                        }
+                        string workingDir = Path.Combine(LocalPath, Build.WorkingDir);
+                        Common.RunCommand(command.Name, argsStr.Trim(), workingDir);
+                        return;
+                    }
                 }
             }
         }
@@ -197,12 +224,15 @@ namespace Samurai.Models
             if (Build != null)
             {
                 Build.WorkingDir = ReplaceWrongDirSepChar(Build.WorkingDir, wrongChar);
-                for (var i = 0; i < Build.Scripts.Count; i++)
+                if (Build.Scripts != null)
                 {
-                    // We fix paths for values that concerns the current OS only
-                    if (Build.Scripts[i].Os == os)
+                    for (var i = 0; i < Build.Scripts.Count; i++)
                     {
-                        Build.Scripts[i].Run = ReplaceWrongDirSepChar(Build.Scripts[i].Run, wrongChar);
+                        // We fix paths for values that concerns the current OS only
+                        if (Build.Scripts[i].Os == os)
+                        {
+                            Build.Scripts[i].Name = ReplaceWrongDirSepChar(Build.Scripts[i].Name, wrongChar);
+                        }
                     }
                 }
             }
@@ -280,13 +310,36 @@ namespace Samurai.Models
             if (Build != null)
             {
                 Build.WorkingDir = ReplaceVars(Build.WorkingDir, tuples);
-                foreach (var script in Build.Scripts)
+
+                if (Build.Scripts != null)
                 {
-                    script.Os = ReplaceVars(script.Os, tuples);
-                    script.Run = ReplaceVars(script.Run, tuples);
-                    for (var i = 0; i < script.Args.Count; i++)
+                    foreach (var script in Build.Scripts)
                     {
-                        script.Args[i] = ReplaceVars(script.Args[i], tuples);
+                        script.Os = ReplaceVars(script.Os, tuples);
+                        script.Name = ReplaceVars(script.Name, tuples);
+                        if (script.Args != null)
+                        {
+                            for (var i = 0; i < script.Args.Count; i++)
+                            {
+                                script.Args[i] = ReplaceVars(script.Args[i], tuples);
+                            }
+                        }
+                    }
+                }
+                
+                if (Build.Commands != null)
+                {
+                    foreach (var command in Build.Commands)
+                    {
+                        command.Os = ReplaceVars(command.Os, tuples);
+                        command.Name = ReplaceVars(command.Name, tuples);
+                        if (command.Args != null)
+                        {
+                            for (var i = 0; i < command.Args.Count; i++)
+                            {
+                                command.Args[i] = ReplaceVars(command.Args[i], tuples);
+                            }
+                        }
                     }
                 }
             }

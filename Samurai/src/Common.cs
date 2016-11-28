@@ -79,11 +79,16 @@ namespace Samurai
             process.Close();
         }
 
-        public static void PrintException(Exception e)
+        public static void PrintException(string message)
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(e.Message);
+            Console.WriteLine(message);
             Console.ResetColor();
+        }
+
+        public static void PrintException(Exception e)
+        {
+            PrintException(e.Message);
         }
 
         public static void PrintImportantStep(string message)
