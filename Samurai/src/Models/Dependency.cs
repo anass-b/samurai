@@ -1,6 +1,5 @@
 ﻿using LibGit2Sharp;
 using System;
-using System.Diagnostics;
 using System.IO;
 
 namespace Samurai.Models
@@ -12,6 +11,24 @@ namespace Samurai.Models
         public Source Source { get; set; }
         public CMake CMake { get; set; }
         public Build Build { get; set; }
+
+        string _version;
+        public string Version
+        {
+            get { return _version; }
+            set
+            {
+                if (value.Length == 0)
+                {
+                    // We don't accept zero length string, it will be considered as null
+                    _version = null;
+                }
+                else
+                {
+                    _version = value;
+                }
+            }
+        }
 
         public void Fetch()
         {
@@ -139,29 +156,6 @@ namespace Samurai.Models
 
             RunBuildScriptForOs(os);
         }
-
-        string _version;
-        public string Version
-        {
-            get
-            {
-                return _version;
-            }
-
-            set
-            {
-                if (value.Length == 0)
-                {
-                    // We don't accept zero length string, it will be considered as null
-                    _version = null;
-                }
-                else
-                {
-                    _version = value;
-                }
-            }
-        }
-
 
         string _globalPath;
         public string GlobalPath
