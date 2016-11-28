@@ -134,6 +134,8 @@ namespace Samurai.Models
                 {
                     if (script.Os == os)
                     {
+                        Common.PrintImportantStep($"Building {Name}");
+
                         string argsStr = "";
                         if (script.Args != null)
                         {
@@ -156,6 +158,8 @@ namespace Samurai.Models
                 {
                     if (command.Os == os)
                     {
+                        Common.PrintImportantStep($"Building {Name}");
+
                         string argsStr = "";
                         if (command.Args != null)
                         {
@@ -178,8 +182,6 @@ namespace Samurai.Models
         public void RunBuild()
         {
             if (Build == null) return;
-
-            Common.PrintImportantStep($"Building {Name}");
 
             RunBuildScriptForOs(Common.GetOs());
         }
