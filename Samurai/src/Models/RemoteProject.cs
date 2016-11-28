@@ -1,6 +1,7 @@
 ﻿using LibGit2Sharp;
 using System;
 using System.IO;
+using System.Net;
 
 namespace Samurai.Models
 {
@@ -14,6 +15,9 @@ namespace Samurai.Models
             Copy();
         }
 
+        /// <summary>
+        /// Download the resource into <see cref="GlobalPath"/>
+        /// </summary>
         public void Download()
         {
             // We don't overwrite existing directories
@@ -47,10 +51,19 @@ namespace Samurai.Models
             }
             else if (Source.Type == Source.FileTypeName)
             {
-                throw new NotImplementedException();
+                Directory.CreateDirectory(GlobalPath);
+
+                string filename = Path.GetFileName(new Uri(Source.Url).AbsolutePath);
+                string downloadPath = Path.Combine(GlobalPath, filename);
+
+                var webClient = new WebClient();
+                webClient.DownloadFile(Source.Url, downloadPath);
             }
         }
 
+        /// <summary>
+        /// Copies the resource from <see cref="GlobalPath"/> to <see cref="Project.LocalPath"/>
+        /// </summary>
         void Copy()
         {
             // We don't overwrite existing directories

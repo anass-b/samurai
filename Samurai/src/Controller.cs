@@ -107,11 +107,26 @@ namespace Samurai
             .OnExecute(() =>
             {
                 _config.AssignVars(vars.Value());
-                return Build();
+                return All();
             });
         }
 
-        int All(string vars)
+        public void AddZombiesCli(CommandLineApplication cli)
+        {
+            CommandOption vars = null, delete = null;
+            cli.Command("zombies", (command) =>
+            {
+                vars = AddVarsOption(command);
+                delete = command.Option("--delete|-d", "Delete zombies", CommandOptionType.NoValue);
+            })
+            .OnExecute(() =>
+            {
+                _config.AssignVars(vars.Value());
+                return Zombies(delete.HasValue());
+            });
+        }
+
+        int All()
         {
             try
             {
@@ -228,6 +243,55 @@ namespace Samurai
             try
             {
                 _config.Self.RunBuild();
+                return 0;
+            }
+            catch (Exception e)
+            {
+                Common.PrintException(e);
+                return 1;
+            }
+        }
+
+        int Zombies(bool delete)
+        {
+            try
+            {
+                string[] dirs = Directory.GetDirectories(Locations.VendorFolderPath);
+                foreach (var dir in dirs)
+                {
+                    string resource = Path.GetFileName(dir);
+
+                    bool found = false;
+                    foreach (var dep in _config.Dependencies)
+                    {
+                        if (dep.Name == resource)
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found)
+                    {
+                        if (delete)
+                        {
+                            Common.PrintImportantStep($"Deleting: {dir}");
+                            try
+                            {
+                                Directory.Delete(dir, true);
+                            }
+                            catch (Exception e)
+                            {
+                                Common.PrintException(e);
+                                Console.WriteLine($"Couldn't delete: {dir}");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine(resource);
+                        }
+                    }
+                }
                 return 0;
             }
             catch (Exception e)

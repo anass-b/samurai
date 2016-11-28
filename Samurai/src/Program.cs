@@ -21,6 +21,7 @@ namespace Samurai
                 ctrl.AddCMakeCli(app);
                 ctrl.AddBuildCli(app);
                 ctrl.AddAllCli(app);
+                ctrl.AddZombiesCli(app);
 
                 app.HelpOption("-? | -h | --help");
             }

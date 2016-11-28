@@ -182,6 +182,23 @@ namespace Samurai.Models
                         CMake.Generators[i].Name = ReplaceVars(CMake.Generators[i].Name, tuples);
                     }
                 }
+                if (CMake.Vars != null)
+                {
+                    foreach (var prop in CMake.Vars.Properties())
+                    {
+                        prop.Value = ReplaceVars(prop.Value.ToString(), tuples);
+                    }
+                }
+                if (CMake.OsSpecificVars != null)
+                {
+                    for (var i = 0; i < CMake.OsSpecificVars.Count; i++)
+                    {
+                        foreach (var prop in CMake.OsSpecificVars[i].Vars.Properties())
+                        {
+                            prop.Value = ReplaceVars(prop.Value.ToString(), tuples);
+                        }
+                    }
+                }
                 CMake.WorkingDir = ReplaceVars(CMake.WorkingDir, tuples);
                 CMake.SrcDir = ReplaceVars(CMake.SrcDir, tuples);
             }
