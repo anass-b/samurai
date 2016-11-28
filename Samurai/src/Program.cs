@@ -20,6 +20,9 @@ namespace Samurai
                 Config config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(Locations.ConfigFilePath));
                 var ctrl = new Controller(config);
                 ctrl.AddFetchCli(app);
+                ctrl.AddCMakeCli(app);
+                ctrl.AddBuildCli(app);
+                ctrl.AddAllCli(app);
 
                 app.HelpOption("-? | -h | --help");
             }

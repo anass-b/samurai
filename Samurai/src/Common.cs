@@ -55,22 +55,25 @@ namespace Samurai
             }
         }
 
-        public static void RunCommand(string program, string args)
+        public static void RunCommand(string program, string args, string workingDirectory)
         {
-            var startInfo = new ProcessStartInfo(program, args);
-            startInfo.CreateNoWindow = true;
-            startInfo.UseShellExecute = false;
-            startInfo.RedirectStandardOutput = true;
-
             var process = new Process();
-            process.StartInfo = startInfo;
-            process.OutputDataReceived += (object sender, DataReceivedEventArgs e) =>
-            {
-                Console.WriteLine(e.Data);
-            };
+            process.StartInfo.FileName = program;
+            process.StartInfo.Arguments = args;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.WorkingDirectory = workingDirectory;
             process.Start();
 
+            // Synchronously read the standard output of the spawned process. 
+            StreamReader reader = process.StandardOutput;
+            string output = reader.ReadToEnd();
+
+            // Write the redirected output to this application's window.
+            Console.WriteLine(output);
+
             process.WaitForExit();
+            process.Close();
         }
 
         public static void PrintException(Exception e)

@@ -14,18 +14,84 @@ namespace Samurai
             _config = config;
         }
 
+        CommandOption AddVarsOptions(CommandLineApplication target)
+        {
+            return target.Option("--vars|-v", "Variables", CommandOptionType.SingleValue);
+        }
+
         public void AddFetchCli(CommandLineApplication cli)
         {
+            CommandOption vars = null;
             cli.Command("fetch", (command) =>
             {
+                vars = AddVarsOptions(command);
             })
             .OnExecute(() =>
             {
+                _config.AssignVars(vars.Value());
                 return Fetch();
             });
         }
 
-        public int Fetch()
+        public void AddCMakeCli(CommandLineApplication cli)
+        {
+            CommandOption vars = null;
+            cli.Command("cmake", (command) =>
+            {
+                vars = AddVarsOptions(command);
+            })
+            .OnExecute(() =>
+            {
+                _config.AssignVars(vars.Value());
+                return CMake();
+            });
+        }
+
+        public void AddBuildCli(CommandLineApplication cli)
+        {
+            CommandOption vars = null;
+            cli.Command("build", (command) =>
+            {
+                vars = AddVarsOptions(command);
+            })
+            .OnExecute(() =>
+            {
+                _config.AssignVars(vars.Value());
+                return Build();
+            });
+        }
+
+        public void AddAllCli(CommandLineApplication cli)
+        {
+            CommandOption vars = null;
+            cli.Command("all", (command) =>
+            {
+                vars = AddVarsOptions(command);
+            })
+            .OnExecute(() =>
+            {
+                _config.AssignVars(vars.Value());
+                return Build();
+            });
+        }
+
+        int All(string vars)
+        {
+            try
+            {
+                Fetch();
+                CMake();
+                Build();
+                return 0;
+            }
+            catch (Exception e)
+            {
+                Common.PrintException(e);
+                return 1;
+            }
+        }
+
+        int Fetch()
         {
             try
             {
@@ -44,6 +110,40 @@ namespace Samurai
                     dep.Fetch();
                 }
 
+                return 0;
+            }
+            catch (Exception e)
+            {
+                Common.PrintException(e);
+                return 1;
+            }
+        }
+
+        int CMake()
+        {
+            try
+            {
+                foreach (var dep in _config.Dependencies)
+                {
+                    dep.RunCMake();
+                }
+                return 0;
+            }
+            catch (Exception e)
+            {
+                Common.PrintException(e);
+                return 1;
+            }
+        }
+
+        int Build()
+        {
+            try
+            {
+                foreach (var dep in _config.Dependencies)
+                {
+                    dep.RunBuild();
+                }
                 return 0;
             }
             catch (Exception e)

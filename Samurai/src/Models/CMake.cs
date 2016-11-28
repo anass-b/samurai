@@ -8,5 +8,7 @@ namespace Samurai.Models
         public List<string> Args { get; set; }
         public JObject Vars { get; set; }
         public string Generator { get; set; }
+        public string WorkingDir { get; set; }
+        public string SrcDir { get; set; }
     }
 }
