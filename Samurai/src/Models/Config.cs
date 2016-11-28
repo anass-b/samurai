@@ -19,12 +19,15 @@ namespace Samurai.Models
 
         public void AssignVars(string varsStr)
         {
+            if (varsStr == null || varsStr.Length == 0) return;
+
             string[] tuples = varsStr.Split(';');
+            if (tuples.Length == 0) return;
 
             foreach (var dep in Dependencies)
             {
                 dep.Name = ReplaceVars(dep.Name, tuples);
-                dep.Version = ReplaceVars(dep.Name, tuples);
+                dep.Version = ReplaceVars(dep.Version, tuples);
 
                 dep.Source.Type = ReplaceVars(dep.Source.Type, tuples);
                 dep.Source.Url = ReplaceVars(dep.Source.Url, tuples);
@@ -42,7 +45,7 @@ namespace Samurai.Models
                     foreach (var script in dep.Build.Scripts)
                     {
                         script.Os = ReplaceVars(script.Os, tuples);
-                        script.Run = ReplaceVars(script.Os, tuples);
+                        script.Run = ReplaceVars(script.Run, tuples);
                         for (var i = 0; i < script.Args.Count; i++)
                         {
                             script.Args[i] = ReplaceVars(script.Args[i], tuples);
