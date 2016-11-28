@@ -90,6 +90,16 @@ namespace Samurai.Models
             }
         }
 
+        string GetGeneratorForCurrentOs()
+        {
+            string os = Common.GetOs();
+            foreach (var generator in CMake.Generators)
+            {
+                if (generator.Os == os) return generator.Name;
+            }
+            throw new Exception("Non supported OS");
+        }
+
         public void RunCMake()
         {
             if (CMake == null) return;
@@ -109,9 +119,9 @@ namespace Samurai.Models
                     args += $" {arg}";
                 }
             }
-            if (CMake.Generator != null)
+            if (CMake.Generators != null)
             {
-                args += $" -G\"{CMake.Generator}\"";
+                args += $" -G\"{GetGeneratorForCurrentOs()}\"";
             }
             args = args.Trim();
 

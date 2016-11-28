@@ -82,7 +82,14 @@ namespace Samurai.Models
 
                 if (dep.CMake != null)
                 {
-                    dep.CMake.Generator = ReplaceVars(dep.CMake.Generator, tuples);
+                    if (dep.CMake.Generators != null)
+                    {
+                        for (var i = 0; i < dep.CMake.Generators.Count; i++)
+                        {
+                            var generator = dep.CMake.Generators[i];
+                            generator.Name = ReplaceVars(generator.Name, tuples);
+                        }
+                    }
                     dep.CMake.WorkingDir = ReplaceVars(dep.CMake.WorkingDir, tuples);
                     dep.CMake.SrcDir = ReplaceVars(dep.CMake.SrcDir, tuples);
                 }
@@ -96,7 +103,8 @@ namespace Samurai.Models
                         script.Run = ReplaceVars(script.Run, tuples);
                         for (var i = 0; i < script.Args.Count; i++)
                         {
-                            script.Args[i] = ReplaceVars(script.Args[i], tuples);
+                            var arg = script.Args[i];
+                            arg = ReplaceVars(arg, tuples);
                         }
                     }
                 }
