@@ -87,6 +87,21 @@ namespace Samurai.Models
             }
         }
 
+        public override void AssignVars(string varsStr)
+        {
+            base.AssignVars(varsStr);
+
+            if (varsStr == null || varsStr.Length == 0) return;
+
+            string[] tuples = varsStr.Split(';');
+            if (tuples.Length == 0) return;
+
+            Name = ReplaceVars(Name, tuples);
+            Version = ReplaceVars(Version, tuples);
+
+            Source.Url = ReplaceVars(Source.Url, tuples);
+        }
+
         string _version;
         public string Version
         {

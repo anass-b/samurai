@@ -1,5 +1,4 @@
-﻿using LibGit2Sharp;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
 
@@ -86,7 +85,9 @@ namespace Samurai.Models
                     {
                         argsStr += $" {arg}";
                     }
-                    Common.RunCommand(script.Run, argsStr.Trim(), Path.Combine(LocalPath, Build.WorkingDir));
+                    string workingDir = Path.Combine(LocalPath, Build.WorkingDir);
+                    string scriptPath = Path.Combine(Environment.CurrentDirectory, script.Run);
+                    Common.RunCommand(scriptPath, argsStr.Trim(), workingDir);
                     return;
                 }
             }
@@ -136,17 +137,67 @@ namespace Samurai.Models
                 Build.WorkingDir = ReplaceWrongDirSepChar(Build.WorkingDir, wrongChar);
                 for (var i = 0; i < Build.Scripts.Count; i++)
                 {
-                    var script = Build.Scripts[i];
                     // We fix paths for values that concerns the current OS only
-                    if (script.Os == os)
+                    if (Build.Scripts[i].Os == os)
                     {
-                        script.Run = ReplaceWrongDirSepChar(script.Run, wrongChar);
+                        Build.Scripts[i].Run = ReplaceWrongDirSepChar(Build.Scripts[i].Run, wrongChar);
                     }
                 }
             }
             if (Patch != null)
             {
                 Patch = ReplaceWrongDirSepChar(Patch, wrongChar);
+            }
+        }
+
+        protected string ReplaceVars(string str, string[] tuples)
+        {
+            if (str == null || str.Length == 0) return null;
+            if (tuples == null || tuples.Length == 0) return null;
+
+            foreach (string tuple in tuples)
+            {
+                string[] values = tuple.Split('=');
+                string var = "${" + values[0] + "}";
+                str = str.Replace(var, values[1]);
+            }
+            return str;
+        }
+
+        public virtual void AssignVars(string varsStr)
+        {
+            if (varsStr == null || varsStr.Length == 0) return;
+
+            string[] tuples = varsStr.Split(';');
+            if (tuples.Length == 0) return;
+
+            Name = ReplaceVars(Name, tuples);
+
+            if (CMake != null)
+            {
+                if (CMake.Generators != null)
+                {
+                    for (var i = 0; i < CMake.Generators.Count; i++)
+                    {
+                        CMake.Generators[i].Name = ReplaceVars(CMake.Generators[i].Name, tuples);
+                    }
+                }
+                CMake.WorkingDir = ReplaceVars(CMake.WorkingDir, tuples);
+                CMake.SrcDir = ReplaceVars(CMake.SrcDir, tuples);
+            }
+
+            if (Build != null)
+            {
+                Build.WorkingDir = ReplaceVars(Build.WorkingDir, tuples);
+                foreach (var script in Build.Scripts)
+                {
+                    script.Os = ReplaceVars(script.Os, tuples);
+                    script.Run = ReplaceVars(script.Run, tuples);
+                    for (var i = 0; i < script.Args.Count; i++)
+                    {
+                        script.Args[i] = ReplaceVars(script.Args[i], tuples);
+                    }
+                }
             }
         }
 
