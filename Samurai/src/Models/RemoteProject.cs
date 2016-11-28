@@ -1,4 +1,6 @@
 ﻿using LibGit2Sharp;
+using SharpCompress.Archives;
+using SharpCompress.Readers;
 using System;
 using System.IO;
 using System.Net;
@@ -47,7 +49,21 @@ namespace Samurai.Models
             }
             else if (Source.Type == Source.ArchiveTypeName)
             {
-                throw new NotImplementedException();
+                string filename = Path.GetFileNameWithoutExtension(new Uri(Source.Url).AbsolutePath);
+                string archiveName = Guid.NewGuid().ToString() + "." + Path.GetExtension(new Uri(Source.Url).AbsolutePath);
+                string downloadPath = Path.Combine(Locations.DotFolderPath, archiveName);
+
+                var webClient = new WebClient();
+                webClient.DownloadFile(Source.Url, downloadPath);
+
+                ExtractionOptions options = new ExtractionOptions();
+                options.ExtractFullPath = true;
+                ArchiveFactory.WriteToDirectory(downloadPath, Locations.DotFolderPath, options);
+
+                string extractedDirName = Path.Combine(Locations.DotFolderPath, filename);
+                Directory.Move(extractedDirName, GlobalPath);
+
+                File.Delete(downloadPath);
             }
             else if (Source.Type == Source.FileTypeName)
             {
