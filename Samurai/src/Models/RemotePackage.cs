@@ -211,11 +211,11 @@ namespace Samurai.Models
                 {
                     if (string.IsNullOrEmpty(Version))
                     {
-                        _globalPath = Path.Combine(Locations.DotFolderPath, $"{Name}@{Version}");
+                        _globalPath = Path.Combine(Locations.DotFolderPath, Name);
                     }
                     else
                     {
-                        _globalPath = Path.Combine(Locations.DotFolderPath, Name);
+                        _globalPath = Path.Combine(Locations.DotFolderPath, $"{Name}@{Version}");
                     }
                 }
                 return _globalPath;
