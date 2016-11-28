@@ -6,9 +6,21 @@ namespace Samurai
     public class Locations
     {
         public static string DotFolderName = ".samurai";
+
+        /// <summary>
+        /// The file that holds the config that will be parsed into
+        /// <see cref="Models.Config"/>
+        /// </summary>
         public static string ConfigFileName = "samurai.json";
+
+        /// <summary>
+        /// Also named sometimes "local folder" throughout the code
+        /// </summary>
         public static string VendorFolderName = "vendor";
 
+        /// <summary>
+        /// Full path of the global .samurai directory
+        /// </summary>
         static string _dotFolderPath;
         public static string DotFolderPath
         {
@@ -24,6 +36,9 @@ namespace Samurai
             }
         }
 
+        /// <summary>
+        /// Full path of samurai.json
+        /// </summary>
         static string _configFilePath;
         public static string ConfigFilePath
         {
@@ -37,6 +52,9 @@ namespace Samurai
             }
         }
 
+        /// <summary>
+        /// Full path of the local vendor file
+        /// </summary>
         static string _vendorFolderPath;
         public static string VendorFolderPath
         {

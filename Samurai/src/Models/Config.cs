@@ -4,8 +4,8 @@ namespace Samurai.Models
 {
     public class Config
     {
-        public List<RemoteProject> Dependencies { get; set; }
-        public Project Self { get; set; }
+        public List<RemotePackage> Dependencies { get; set; }
+        public Package Self { get; set; }
 
         public void FixDirSeparatorInPaths()
         {

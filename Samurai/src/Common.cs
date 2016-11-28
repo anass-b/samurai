@@ -4,7 +4,7 @@ using System.IO;
 
 namespace Samurai
 {
-    public class Common
+    public static class Common
     {
         public const string OsIdWin = "win";
         public const string OsIdUnix = "unix";

@@ -4,13 +4,38 @@ using System.IO;
 
 namespace Samurai.Models
 {
-    public class Project
+    public class Package
     {
+        /// <summary>
+        /// Package name, serves as the folder name in the global ~/.samuarai
+        /// or local vendor/
+        /// </summary>
+        /// <value>The name.</value>
         public string Name { get; set; }
+
+        /// <summary>
+        /// Path of a .patch file, this should be relative to the
+        /// <see cref="Environment.CurrentDirectory"/>
+        /// </summary>
+        /// <value>The patch.</value>
         public string Patch { get; set; }
+
+        /// <summary>
+        /// Cmake config
+        /// </summary>
+        /// <value>The CM ake.</value>
         public CMake CMake { get; set; }
+
+        /// <summary>
+        /// Build config
+        /// </summary>
+        /// <value>The build.</value>
         public Build Build { get; set; }
 
+        /// <summary>
+        /// Gets a CMake generator for current OS.
+        /// </summary>
+        /// <returns>OS ID</returns>
         string GetGeneratorForCurrentOs()
         {
             string os = Common.GetOs();
@@ -21,6 +46,10 @@ namespace Samurai.Models
             throw new Exception("Non supported OS");
         }
 
+        /// <summary>
+        /// Gets CMake vars that can be used with the current OS
+        /// </summary>
+        /// <returns>Vars JSON object</returns>
         JObject GetCurrentOsCMakeVars()
         {
             string os = Common.GetOs();
@@ -31,6 +60,11 @@ namespace Samurai.Models
             throw new Exception("Non supported OS");
         }
 
+        /// <summary>
+        /// Converts vars JSON object to CMake args
+        /// </summary>
+        /// <returns>The ake variables to arguments.</returns>
+        /// <param name="vars">CMake args</param>
         string CMakeVarsToArgs(JObject vars)
         {
             var args = "";
@@ -41,6 +75,9 @@ namespace Samurai.Models
             return args;
         }
 
+        /// <summary>
+        /// Run CMake on this package
+        /// </summary>
         public void RunCMake()
         {
             if (CMake == null) return;
@@ -74,6 +111,10 @@ namespace Samurai.Models
             Common.RunCommand("cmake", args, workingDir);
         }
 
+        /// <summary>
+        /// Run build config for current OS
+        /// </summary>
+        /// <param name="os">Os.</param>
         void RunBuildScriptForOs(string os)
         {
             foreach (var script in Build.Scripts)
@@ -93,6 +134,9 @@ namespace Samurai.Models
             }
         }
 
+        /// <summary>
+        /// Run build config
+        /// </summary>
         public void RunBuild()
         {
             if (Build == null) return;
@@ -100,11 +144,13 @@ namespace Samurai.Models
             RunBuildScriptForOs(Common.GetOs());
         }
 
-        protected string ReplaceWrongDirSepChar(string path, char wrongChar)
-        {
-            return path = path.Replace(wrongChar, Path.DirectorySeparatorChar);
-        }
-
+        /// <summary>
+        /// Get the path separator that should not be used with the current OS
+        /// Example: if we are on Windows this method returns '/',
+        /// on Unix/Linux/macOS it returns '\\'
+        /// </summary>
+        /// <returns>Char containing the path separator that should
+        /// not be used with the current OS</returns>
         protected char GetWrongDirSepChar()
         {
             string os = Common.GetOs();
@@ -122,6 +168,22 @@ namespace Samurai.Models
             }
         }
 
+        /// <summary>
+        /// Replaces occurences of <paramref name="wrongChar"/> with
+        /// <see cref="Path.DirectorySeparatorChar"/>
+        /// </summary>
+        /// <returns>The wrong dir sep char.</returns>
+        /// <param name="path">Path.</param>
+        /// <param name="wrongChar">Wrong char.</param>
+        protected string ReplaceWrongDirSepChar(string path, char wrongChar)
+        {
+            return path = path.Replace(wrongChar, Path.DirectorySeparatorChar);
+        }
+
+        /// <summary>
+        /// Replaces directory separators that are not compatible with current OS
+        /// with the appropriate one, which is taken from <see cref="Path.DirectorySeparatorChar"/>
+        /// </summary>
         public virtual void FixDirSeparatorInPaths()
         {
             string os = Common.GetOs();
@@ -150,6 +212,13 @@ namespace Samurai.Models
             }
         }
 
+        /// <summary>
+        /// Replaces strings that look like ${VAR} with their values
+        /// using <paramref name="tuples"/>
+        /// </summary>
+        /// <returns>Final string with replaced vars</returns>
+        /// <param name="str">String to be processed</param>
+        /// <param name="tuples">Tuples of Var/Value separated by '=' character</param>
         protected string ReplaceVars(string str, string[] tuples)
         {
             if (str == null || str.Length == 0) return null;
@@ -164,9 +233,14 @@ namespace Samurai.Models
             return str;
         }
 
+        /// <summary>
+        /// Replaces strings that look like ${VAR} with their values
+        /// on the whole config
+        /// </summary>
+        /// <param name="varsStr">Vars from command line argument --vars</param>
         public virtual void AssignVars(string varsStr)
         {
-            if (varsStr == null || varsStr.Length == 0) return;
+            if (string.IsNullOrEmpty(varsStr)) return;
 
             string[] tuples = varsStr.Split(';');
             if (tuples.Length == 0) return;
@@ -218,6 +292,9 @@ namespace Samurai.Models
             }
         }
 
+        /// <summary>
+        /// Path of this package in local vendor/ directory
+        /// </summary>
         string _localPath;
         public string LocalPath
         {
@@ -225,7 +302,7 @@ namespace Samurai.Models
             {
                 if (_localPath == null)
                 {
-                    if (Name == null || Name.Length == 0)
+                    if (string.IsNullOrEmpty(Name))
                     {
                         _localPath = Environment.CurrentDirectory;
                     }

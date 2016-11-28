@@ -252,6 +252,11 @@ namespace Samurai
             }
         }
 
+        /// <summary>
+        /// Gets package that are present in local vendor/ directory
+        /// but are not mentioned as a dependency in samurai.json file
+        /// </summary>
+        /// <param name="delete">Tells whether to delete the zombie directories</param>
         int Zombies(bool delete)
         {
             try

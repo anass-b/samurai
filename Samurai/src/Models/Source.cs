@@ -1,5 +1,8 @@
 ﻿namespace Samurai.Models
 {
+    /// <summary>
+    /// Represents a Git repository or URL
+    /// </summary>
     public class Source
     {
         public const string GitTypeName = "git";
