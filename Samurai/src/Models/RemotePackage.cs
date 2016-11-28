@@ -148,6 +148,8 @@ namespace Samurai.Models
         {
             if (string.IsNullOrEmpty(Patch)) return;
 
+            Common.PrintImportantStep($"Patching {Name}");
+
             // Patch absolute path
             string patchPath = Path.Combine(Environment.CurrentDirectory, Patch);
             // Apply patch using git cli, LibGit2Sharp doesn't support applying patches yet

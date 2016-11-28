@@ -81,6 +81,17 @@ namespace Samurai.Models
         public void RunCMake()
         {
             if (CMake == null) return;
+
+            if (CMake.ExcludeOS != null)
+            {
+                string currentOs = Common.GetOs();
+                foreach (var os in CMake.ExcludeOS)
+                {
+                    if (currentOs == os) return;
+                }
+            }
+
+            Common.PrintImportantStep($"Running cmake {Name}");
             
             string args = $"{CMake.SrcDir} ";
             if (CMake.Vars != null)
@@ -131,7 +142,7 @@ namespace Samurai.Models
                                 argsStr += $" {arg}";
                             }
                         }
-                        string workingDir = Path.Combine(LocalPath, Build.WorkingDir);
+                        string workingDir = script.WorkingDir == null ? LocalPath : Path.Combine(LocalPath, script.WorkingDir);
                         string scriptPath = Path.Combine(Environment.CurrentDirectory, script.Name);
                         Common.RunCommand(scriptPath, argsStr.Trim(), workingDir);
                         return;
@@ -153,7 +164,7 @@ namespace Samurai.Models
                                 argsStr += $" {arg}";
                             }
                         }
-                        string workingDir = Path.Combine(LocalPath, Build.WorkingDir);
+                        string workingDir = command.WorkingDir == null ? LocalPath : Path.Combine(LocalPath, command.WorkingDir);
                         Common.RunCommand(command.Name, argsStr.Trim(), workingDir);
                         return;
                     }
@@ -167,6 +178,8 @@ namespace Samurai.Models
         public void RunBuild()
         {
             if (Build == null) return;
+
+            Common.PrintImportantStep($"Building {Name}");
 
             RunBuildScriptForOs(Common.GetOs());
         }
@@ -223,11 +236,12 @@ namespace Samurai.Models
             }
             if (Build != null)
             {
-                Build.WorkingDir = ReplaceWrongDirSepChar(Build.WorkingDir, wrongChar);
                 if (Build.Scripts != null)
                 {
                     for (var i = 0; i < Build.Scripts.Count; i++)
                     {
+                        Build.Scripts[i].WorkingDir = ReplaceWrongDirSepChar(Build.Scripts[i].WorkingDir, wrongChar);
+
                         // We fix paths for values that concerns the current OS only
                         if (Build.Scripts[i].Os == os)
                         {
@@ -309,12 +323,14 @@ namespace Samurai.Models
 
             if (Build != null)
             {
-                Build.WorkingDir = ReplaceVars(Build.WorkingDir, tuples);
-
                 if (Build.Scripts != null)
                 {
                     foreach (var script in Build.Scripts)
                     {
+                        if (!string.IsNullOrEmpty(script.WorkingDir))
+                        {
+                            script.WorkingDir = ReplaceVars(script.WorkingDir, tuples);
+                        }
                         script.Os = ReplaceVars(script.Os, tuples);
                         script.Name = ReplaceVars(script.Name, tuples);
                         if (script.Args != null)
@@ -331,6 +347,10 @@ namespace Samurai.Models
                 {
                     foreach (var command in Build.Commands)
                     {
+                        if (!string.IsNullOrEmpty(command.WorkingDir))
+                        {
+                            command.WorkingDir = ReplaceVars(command.WorkingDir, tuples);
+                        }
                         command.Os = ReplaceVars(command.Os, tuples);
                         command.Name = ReplaceVars(command.Name, tuples);
                         if (command.Args != null)
@@ -347,6 +367,7 @@ namespace Samurai.Models
 
         /// <summary>
         /// Path of this package in local vendor/ directory
+        /// or <see cref="Environment.CurrentDirectory"/> for <see cref="Config.Self"/>
         /// </summary>
         string _localPath;
         public string LocalPath

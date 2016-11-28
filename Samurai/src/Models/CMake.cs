@@ -17,6 +17,7 @@ namespace Samurai.Models
 
     public class CMake
     {
+        public List<string> ExcludeOS { get; set; }
         public List<string> Args { get; set; }
         public JObject Vars { get; set; }
         public List<OsSpecificCMakeVarSet> OsSpecificVars { get; set; }
