@@ -12,6 +12,7 @@ namespace Samurai
         public Controller(Config config)
         {
             _config = config;
+            _config.FixDirSeparatorInPaths();
         }
 
         CommandOption AddVarsOptions(CommandLineApplication target)
@@ -30,6 +31,20 @@ namespace Samurai
             {
                 _config.AssignVars(vars.Value());
                 return Fetch();
+            });
+        }
+
+        public void AddPatchCli(CommandLineApplication cli)
+        {
+            CommandOption vars = null;
+            cli.Command("patch", (command) =>
+            {
+                vars = AddVarsOptions(command);
+            })
+            .OnExecute(() =>
+            {
+                _config.AssignVars(vars.Value());
+                return Patch();
             });
         }
 
@@ -80,6 +95,7 @@ namespace Samurai
             try
             {
                 Fetch();
+                Patch();
                 CMake();
                 Build();
                 return 0;
@@ -110,6 +126,23 @@ namespace Samurai
                     dep.Fetch();
                 }
 
+                return 0;
+            }
+            catch (Exception e)
+            {
+                Common.PrintException(e);
+                return 1;
+            }
+        }
+
+        int Patch()
+        {
+            try
+            {
+                foreach (var dep in _config.Dependencies)
+                {
+                    dep.ApplyPatch();
+                }
                 return 0;
             }
             catch (Exception e)

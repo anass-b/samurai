@@ -18,7 +18,7 @@ namespace Samurai.Models
             get { return _version; }
             set
             {
-                if (value.Length == 0)
+                if (value != null && value.Length == 0)
                 {
                     // We don't accept zero length string, it will be considered as null
                     _version = null;
@@ -115,7 +115,11 @@ namespace Samurai.Models
             }
             args = args.Trim();
 
-            Common.RunCommand("cmake.exe", args, Path.Combine(LocalPath, CMake.WorkingDir));
+            string workingDir = Path.Combine(LocalPath, CMake.WorkingDir);
+
+            if (!Directory.Exists(workingDir)) Directory.CreateDirectory(workingDir);
+
+            Common.RunCommand("cmake", args, workingDir);
         }
 
         public void RunBuildScriptForOs(string os)
@@ -139,22 +143,17 @@ namespace Samurai.Models
         {
             if (Build == null) return;
 
-            string os = null;
-            PlatformID platform = Environment.OSVersion.Platform;
-            switch (platform)
-            {
-                case PlatformID.Win32NT:
-                    os = "win";
-                    break;
-                case PlatformID.MacOSX:
-                    os = "macos";
-                    break;
-                case PlatformID.Unix:
-                    os = "unix";
-                    break;
-            }
+            RunBuildScriptForOs(Common.GetOs());
+        }
 
-            RunBuildScriptForOs(os);
+        public void ApplyPatch()
+        {
+            if (Patch == null || Patch.Length == 0) return;
+
+            // Patch absolute path
+            string patchPath = Path.Combine(Environment.CurrentDirectory, Patch);
+            // Apply patch using git cli, LibGit2Sharp doesn't support applying patches yet
+            Common.RunCommand("git", $"apply {patchPath}", LocalPath);
         }
 
         string _globalPath;

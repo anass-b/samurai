@@ -10,6 +10,10 @@ namespace Samurai
 {
     public class Common
     {
+        public const string OsIdWin = "win";
+        public const string OsIdUnix = "unix";
+        public const string OsIdMacOS = "macos";
+
         /// <summary>
         /// Copy the contents of a directory to another location.
         /// Taken from https://msdn.microsoft.com/en-us/library/bb762914(v=vs.110).aspx
@@ -55,14 +59,17 @@ namespace Samurai
             }
         }
 
-        public static void RunCommand(string program, string args, string workingDirectory)
+        public static void RunCommand(string program, string args = null, string workingDirectory = null)
         {
             var process = new Process();
             process.StartInfo.FileName = program;
             process.StartInfo.Arguments = args;
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.WorkingDirectory = workingDirectory;
+            if (workingDirectory != null)
+            {
+                process.StartInfo.WorkingDirectory = workingDirectory;
+            }
             process.Start();
 
             // Synchronously read the standard output of the spawned process. 
@@ -88,6 +95,24 @@ namespace Samurai
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine(message);
             Console.ResetColor();
+        }
+
+        public static string GetOs()
+        {
+            PlatformID platform = Environment.OSVersion.Platform;
+            switch (platform)
+            {
+                case PlatformID.WinCE:
+                case PlatformID.Win32Windows:
+                case PlatformID.Win32S:
+                case PlatformID.Win32NT:
+                    return OsIdWin;
+                case PlatformID.MacOSX:
+                    return OsIdMacOS;
+                case PlatformID.Unix:
+                    return OsIdUnix;
+            }
+            throw new Exception("Non supported OS");
         }
     }
 }

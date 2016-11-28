@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 
 namespace Samurai.Models
 {
@@ -8,6 +9,9 @@ namespace Samurai.Models
 
         public string ReplaceVars(string str, string[] tuples)
         {
+            if (str == null || str.Length == 0) return null;
+            if (tuples == null || tuples.Length == 0) return null;
+
             foreach (string tuple in tuples)
             {
                 string[] values = tuple.Split('=');
@@ -15,6 +19,50 @@ namespace Samurai.Models
                 str = str.Replace(var, values[1]);
             }
             return str;
+        }
+
+        string ReplaceWrongDirSepChar(string path, char wrongChar)
+        {
+            return path = path.Replace(wrongChar, Path.DirectorySeparatorChar);
+        }
+
+        public void FixDirSeparatorInPaths()
+        {
+            char wrongChar;
+            string os = Common.GetOs();
+            if (os == Common.OsIdWin)
+            {
+                wrongChar = '/';
+            }
+            else if (os == Common.OsIdUnix || os == Common.OsIdMacOS)
+            {
+                wrongChar = '\\';
+            }
+            else
+            {
+                return;
+            }
+
+            foreach (var dep in Dependencies)
+            {
+                if (dep.CMake != null)
+                {
+                    dep.CMake.SrcDir = ReplaceWrongDirSepChar(dep.CMake.SrcDir, wrongChar);
+                    dep.CMake.WorkingDir = ReplaceWrongDirSepChar(dep.CMake.WorkingDir, wrongChar);
+                }
+                if (dep.Build != null)
+                {
+                    dep.Build.WorkingDir = ReplaceWrongDirSepChar(dep.Build.WorkingDir, wrongChar);
+                    for (var i = 0; i < dep.Build.Scripts.Count; i++)
+                    {
+                        dep.Build.Scripts[i].Run = ReplaceWrongDirSepChar(dep.Build.Scripts[i].Run, wrongChar);
+                    }
+                }
+                if (dep.Patch != null)
+                {
+                    dep.Patch = ReplaceWrongDirSepChar(dep.Patch, wrongChar);
+                }
+            }
         }
 
         public void AssignVars(string varsStr)
