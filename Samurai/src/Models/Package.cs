@@ -38,7 +38,7 @@ namespace Samurai.Models
         /// <returns>OS ID</returns>
         string GetGeneratorForCurrentOs()
         {
-            string os = Common.GetOs();
+            string os = OS.GetCurrent();
             foreach (var generator in CMake.Generators)
             {
                 if (generator.Os == os) return generator.Name;
@@ -52,7 +52,7 @@ namespace Samurai.Models
         /// <returns>Vars JSON object</returns>
         JObject GetCurrentOsCMakeVars()
         {
-            string os = Common.GetOs();
+            string os = OS.GetCurrent();
             foreach (var varSet in CMake.OsSpecificVars)
             {
                 if (varSet.Os == os) return varSet.Vars;
@@ -84,14 +84,14 @@ namespace Samurai.Models
 
             if (CMake.ExcludeOS != null)
             {
-                string currentOs = Common.GetOs();
+                string currentOs = OS.GetCurrent();
                 foreach (var os in CMake.ExcludeOS)
                 {
                     if (currentOs == os) return;
                 }
             }
 
-            Common.PrintImportantStep($"Running cmake {Name}");
+            Logs.PrintImportantStep($"Running cmake {Name}");
             
             string args = $"{CMake.SrcDir} ";
             if (CMake.Vars != null)
@@ -111,7 +111,8 @@ namespace Samurai.Models
             }
             if (CMake.Generators != null)
             {
-                args += $" -G\"{GetGeneratorForCurrentOs()}\"";
+                string generator = GetGeneratorForCurrentOs();
+                args += $" -G\"{generator}\"";
             }
             args = args.Trim();
 
@@ -119,7 +120,7 @@ namespace Samurai.Models
 
             if (!Directory.Exists(workingDir)) Directory.CreateDirectory(workingDir);
 
-            Common.RunCommand("cmake", args, workingDir);
+            Shell.RunProgramWithArgs("cmake", args, workingDir);
         }
 
         /// <summary>
@@ -134,7 +135,7 @@ namespace Samurai.Models
                 {
                     if (script.Os == os)
                     {
-                        Common.PrintImportantStep($"Building {Name}");
+                        Logs.PrintImportantStep($"Building {Name}");
 
                         string argsStr = "";
                         if (script.Args != null)
@@ -146,7 +147,7 @@ namespace Samurai.Models
                         }
                         string workingDir = script.WorkingDir == null ? LocalPath : Path.Combine(LocalPath, script.WorkingDir);
                         string scriptPath = Path.Combine(Environment.CurrentDirectory, script.Name);
-                        Common.RunCommand(scriptPath, argsStr.Trim(), workingDir);
+                        Shell.RunProgramWithArgs(scriptPath, argsStr.Trim(), workingDir);
                         return;
                     }
                 }
@@ -158,7 +159,7 @@ namespace Samurai.Models
                 {
                     if (command.Os == os)
                     {
-                        Common.PrintImportantStep($"Building {Name}");
+                        Logs.PrintImportantStep($"Building {Name}");
 
                         string argsStr = "";
                         if (command.Args != null)
@@ -169,7 +170,7 @@ namespace Samurai.Models
                             }
                         }
                         string workingDir = command.WorkingDir == null ? LocalPath : Path.Combine(LocalPath, command.WorkingDir);
-                        Common.RunCommand(command.Name, argsStr.Trim(), workingDir);
+                        Shell.RunProgramWithArgs(command.Name, argsStr.Trim(), workingDir);
                         return;
                     }
                 }
@@ -183,7 +184,7 @@ namespace Samurai.Models
         {
             if (Build == null) return;
 
-            RunBuildScriptForOs(Common.GetOs());
+            RunBuildScriptForOs(OS.GetCurrent());
         }
 
         /// <summary>
@@ -195,12 +196,12 @@ namespace Samurai.Models
         /// not be used with the current OS</returns>
         protected char GetWrongDirSepChar()
         {
-            string os = Common.GetOs();
-            if (os == Common.OsIdWin)
+            string os = OS.GetCurrent();
+            if (os == OS.Windows)
             {
                 return '/';
             }
-            else if (os == Common.OsIdUnix || os == Common.OsIdMacOS)
+            else if (os == OS.Linux || os == OS.MacOS)
             {
                 return '\\';
             }
@@ -228,7 +229,7 @@ namespace Samurai.Models
         /// </summary>
         public virtual void FixDirSeparatorInPaths()
         {
-            string os = Common.GetOs();
+            string os = OS.GetCurrent();
             char wrongChar = GetWrongDirSepChar();
 
             if (CMake != null)

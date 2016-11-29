@@ -140,7 +140,7 @@ namespace Samurai
             }
             catch (Exception e)
             {
-                Common.PrintException(e);
+                Logs.PrintException(e);
                 return 1;
             }
         }
@@ -168,7 +168,7 @@ namespace Samurai
             }
             catch (Exception e)
             {
-                Common.PrintException(e);
+                Logs.PrintException(e);
                 return 1;
             }
         }
@@ -185,7 +185,7 @@ namespace Samurai
             }
             catch (Exception e)
             {
-                Common.PrintException(e);
+                Logs.PrintException(e);
                 return 1;
             }
         }
@@ -202,7 +202,7 @@ namespace Samurai
             }
             catch (Exception e)
             {
-                Common.PrintException(e);
+                Logs.PrintException(e);
                 return 1;
             }
         }
@@ -216,7 +216,7 @@ namespace Samurai
             }
             catch (Exception e)
             {
-                Common.PrintException(e);
+                Logs.PrintException(e);
                 return 1;
             }
         }
@@ -233,7 +233,7 @@ namespace Samurai
             }
             catch (Exception e)
             {
-                Common.PrintException(e);
+                Logs.PrintException(e);
                 return 1;
             }
         }
@@ -247,7 +247,7 @@ namespace Samurai
             }
             catch (Exception e)
             {
-                Common.PrintException(e);
+                Logs.PrintException(e);
                 return 1;
             }
         }
@@ -280,14 +280,14 @@ namespace Samurai
                     {
                         if (delete)
                         {
-                            Common.PrintImportantStep($"Deleting: {dir}");
+                            Logs.PrintImportantStep($"Deleting: {dir}");
                             try
                             {
                                 Directory.Delete(dir, true);
                             }
                             catch (Exception e)
                             {
-                                Common.PrintException(e);
+                                Logs.PrintException(e);
                                 Console.WriteLine($"Couldn't delete: {dir}");
                             }
                         }
@@ -301,7 +301,7 @@ namespace Samurai
             }
             catch (Exception e)
             {
-                Common.PrintException(e);
+                Logs.PrintException(e);
                 return 1;
             }
         }

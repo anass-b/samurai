@@ -27,12 +27,12 @@ namespace Samurai
             }
             catch (FileNotFoundException)
             {
-                Common.PrintException($"{Locations.ConfigFileName} not found.");
+                Logs.PrintException($"{Locations.ConfigFileName} not found.");
                 return 1;
             }
             catch (Exception e)
             {
-                Common.PrintException(e);
+                Logs.PrintException(e);
                 return 1;
             }
 

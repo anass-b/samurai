@@ -30,16 +30,16 @@ namespace Samurai.Models
             // We don't overwrite existing directories
             if (Directory.Exists(GlobalPath)) return;
 
-            Common.PrintImportantStep($"Downloading {Name}");
+            Logs.PrintImportantStep($"Downloading {Name}");
 
             if (Source.Type == Source.GitTypeName)
             {
-                string os = Common.GetOs();
+                string os = OS.GetCurrent();
 
                 // LibGit2Sharp seems to have issues running on macOS Sierra
                 // For Linux/Unix/macOS we use git cli
                 // For Windows we use LibGit2Sharp
-                if (os == Common.OsIdWin)
+                if (os == OS.Windows)
                 {
                     CloneOptions options = new CloneOptions();
                     options.RecurseSubmodules = true;
@@ -60,10 +60,10 @@ namespace Samurai.Models
                 }
                 else
                 {
-                    Common.RunCommand("git", $"clone {Source.Url} {GlobalPath}");
+                    Shell.RunProgramWithArgs("git", $"clone {Source.Url} {GlobalPath}");
                     if (Version != null)
                     {
-                        Common.RunCommand("git", $"checkout tags/{Version}", GlobalPath);
+                        Shell.RunProgramWithArgs("git", $"checkout tags/{Version}", GlobalPath);
                     }
                 }
             }
@@ -129,15 +129,15 @@ namespace Samurai.Models
             // We don't overwrite existing directories
             if (Directory.Exists(LocalPath)) return;
 
-            Common.PrintImportantStep($"Copying {Name}");
+            Logs.PrintImportantStep($"Copying {Name}");
 
             try
             {
-                Common.DirectoryCopy(GlobalPath, LocalPath, true);
+                FileSystem.DirectoryCopy(GlobalPath, LocalPath, true);
             }
             catch (Exception e)
             {
-                Common.PrintException(e);
+                Logs.PrintException(e);
             }
         }
 
@@ -148,12 +148,12 @@ namespace Samurai.Models
         {
             if (string.IsNullOrEmpty(Patch)) return;
 
-            Common.PrintImportantStep($"Patching {Name}");
+            Logs.PrintImportantStep($"Patching {Name}");
 
             // Patch absolute path
             string patchPath = Path.Combine(Environment.CurrentDirectory, Patch);
             // Apply patch using git cli, LibGit2Sharp doesn't support applying patches yet
-            Common.RunCommand("git", $"apply {patchPath}", LocalPath);
+            Shell.RunProgramWithArgs("git", $"apply {patchPath}", LocalPath);
         }
 
         public override void FixDirSeparatorInPaths()
