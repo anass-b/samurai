@@ -125,7 +125,7 @@ namespace Samurai.Models
         /// </summary>
         public void ApplyPatch()
         {
-            if (string.IsNullOrEmpty(Patch)) return;
+            if (string.IsNullOrWhiteSpace(Patch)) return;
 
             Logs.PrintImportantStep($"Patching {Name}");
 

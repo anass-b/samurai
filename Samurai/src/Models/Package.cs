@@ -325,7 +325,7 @@ namespace Samurai.Models
         /// <param name="varsStr">Vars from command line argument --vars</param>
         public virtual void AssignVars(string varsStr)
         {
-            if (string.IsNullOrEmpty(varsStr)) return;
+            if (string.IsNullOrWhiteSpace(varsStr)) return;
 
             string[] tuples = varsStr.Split(';');
             if (tuples.Length == 0) return;
@@ -368,7 +368,7 @@ namespace Samurai.Models
                 {
                     foreach (var script in Build.Scripts)
                     {
-                        if (!string.IsNullOrEmpty(script.WorkingDir))
+                        if (!string.IsNullOrWhiteSpace(script.WorkingDir))
                         {
                             script.WorkingDir = ReplaceVars(script.WorkingDir, tuples);
                         }
@@ -388,7 +388,7 @@ namespace Samurai.Models
                 {
                     foreach (var command in Build.Commands)
                     {
-                        if (!string.IsNullOrEmpty(command.WorkingDir))
+                        if (!string.IsNullOrWhiteSpace(command.WorkingDir))
                         {
                             command.WorkingDir = ReplaceVars(command.WorkingDir, tuples);
                         }
