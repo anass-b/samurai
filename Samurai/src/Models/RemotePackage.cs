@@ -68,29 +68,36 @@ namespace Samurai.Models
             }
             else if (Source.Type == Source.ArchiveTypeName)
             {
-                string filename = Path.GetFileNameWithoutExtension(new Uri(Source.Url).AbsolutePath);
-                string archiveName = Guid.NewGuid() + Path.GetExtension(new Uri(Source.Url).AbsolutePath);
-                string downloadPath = Path.Combine(BasePath, archiveName);
-                string extractedDirPath = Path.Combine(BasePath, filename);
+                string filename = Path.GetFileName(new Uri(Source.Url).AbsolutePath);
+                string downloadPath = Path.Combine(BasePath, filename);
 
                 try
                 {
-                    var webClient = new WebClient();
-                    webClient.DownloadFile(Source.Url, downloadPath);
+                    string extension = Archive.GetExtension(new Uri(Source.Url).AbsolutePath).ToLower();
 
-                    ExtractionOptions options = new ExtractionOptions();
-                    options.ExtractFullPath = true;
-                    ArchiveFactory.WriteToDirectory(downloadPath, BasePath, options);
+                    if (!File.Exists(downloadPath))
+                    {
+                        var webClient = new WebClient();
+                        webClient.DownloadFile(Source.Url, downloadPath);
+                    }
 
-                    Directory.Move(extractedDirPath, PackagePath);
+                    string destination = Source.ArchiveHasRootDir ? BasePath : PackagePath;
+                    if (extension == ".tar.gz")
+                    {
+                        Archive.ExtractTgz(downloadPath, destination);
+                    }
+                    else if (extension == ".tar")
+                    {
+                        Archive.ExtractTar(downloadPath, destination);
+                    }
+                    else if (extension == ".zip")
+                    {
+                        Archive.ExtractZip(downloadPath, destination);
+                    }
                 }
                 finally
                 {
                     // Cleanup
-                    if (Directory.Exists(extractedDirPath))
-                    {
-                        Directory.Delete(extractedDirPath, true);
-                    }
                     if (File.Exists(downloadPath))
                     {
                         File.Delete(downloadPath);

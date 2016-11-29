@@ -11,5 +11,13 @@
 
         public string Type { get; set; }
         public string Url { get; set; }
+
+        /// <summary>
+        /// For <see cref="Type"/>=archive only, it tells that the extracted
+        /// archive will have a root folder after extraction and that we
+        /// should avoid it
+        /// </summary>
+        /// <value><c>true</c> if archive has root dir; otherwise, <c>false</c>.</value>
+        public bool ArchiveHasRootDir { get; set; }
     }
 }
