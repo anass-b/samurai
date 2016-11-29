@@ -1,11 +1,17 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace Samurai.Models
 {
     public class Package
     {
+        /// <summary>
+        /// <see cref="Config"/> class will assign a delegate in this property
+        /// so we can get the value of <see cref="Config.InstallDir"/>
+        /// </summary>
+        /// <value>The get install dir.</value>
         public GetInstallDirDelegate GetInstallDir { get; set; }
 
         /// <summary>
@@ -40,6 +46,13 @@ namespace Samurai.Models
         /// </summary>
         /// <value>The build.</value>
         public Build Build { get; set; }
+
+        /// <summary>
+        /// Tells if this package is the <see cref="Config.Self"/> section
+        /// </summary>
+        /// <value><c>true</c> if is self; otherwise, <c>false</c>.</value>
+        [JsonIgnore]
+        public bool IsSelf { get; set; }
 
         /// <summary>
         /// Gets CMake vars that can be used with the current OS
@@ -422,25 +435,32 @@ namespace Samurai.Models
             {
                 if (_basePath == null)
                 {
-                    if (!string.IsNullOrWhiteSpace(InstallDir))
+                    if (IsSelf)
                     {
-                        if (!Path.IsPathRooted(InstallDir))
-                        {
-                            _basePath = Path.GetFullPath(InstallDir);
-                        }
-                        else
-                        {
-                            _basePath = InstallDir;
-                        }
+                        return Environment.CurrentDirectory;
                     }
                     else
                     {
-                        if (GetInstallDir == null)
+                        if (!string.IsNullOrWhiteSpace(InstallDir))
                         {
-                            throw new Exception($@"{GetInstallDir} delegate is null. 
-                                Call method PostParsingInit() in {typeof(Config).Name} class");
+                            if (!Path.IsPathRooted(InstallDir))
+                            {
+                                _basePath = Path.GetFullPath(InstallDir);
+                            }
+                            else
+                            {
+                                _basePath = InstallDir;
+                            }
                         }
-                        _basePath = GetInstallDir();
+                        else
+                        {
+                            if (GetInstallDir == null)
+                            {
+                                throw new Exception($"{GetInstallDir.GetType().Name} delegate is null. "
+                                    + $"Call method PostParsingInit() in {typeof(Config).Name} class");
+                            }
+                            _basePath = GetInstallDir();
+                        }
                     }
                 }
                 return _basePath;
@@ -457,7 +477,14 @@ namespace Samurai.Models
             {
                 if (_packagePath == null)
                 {
-                    _packagePath = Path.Combine(BasePath, Name);
+                    if (IsSelf)
+                    {
+                        _packagePath = Environment.CurrentDirectory;
+                    }
+                    else
+                    {
+                        _packagePath = Path.Combine(BasePath, Name);
+                    }
                 }
                 return _packagePath;
             }

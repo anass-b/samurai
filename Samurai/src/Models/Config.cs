@@ -20,6 +20,12 @@ namespace Samurai.Models
             {
                 dep.GetInstallDir = GetInstallDir;
             }
+
+            if (Self != null)
+            {
+                Self.IsSelf = true;
+                Self.GetInstallDir = GetInstallDir;
+            }
         }
 
         string GetInstallDir()
