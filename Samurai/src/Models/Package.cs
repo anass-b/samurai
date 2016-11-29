@@ -6,6 +6,15 @@ namespace Samurai.Models
 {
     public class Package
     {
+        public GetInstallDirDelegate GetInstallDir { get; set; }
+
+        /// <summary>
+        /// Directory where the package will be installed,
+        /// excluding the package name
+        /// </summary>
+        /// <value>The install dir.</value>
+        public string InstallDir { get; set; }
+
         /// <summary>
         /// Package name, serves as the folder name in the global ~/.samuarai
         /// or local vendor/
@@ -31,20 +40,6 @@ namespace Samurai.Models
         /// </summary>
         /// <value>The build.</value>
         public Build Build { get; set; }
-
-        /// <summary>
-        /// Gets a CMake generator for current OS.
-        /// </summary>
-        /// <returns>OS ID</returns>
-        string GetGeneratorForCurrentOs()
-        {
-            string os = OS.GetCurrent();
-            foreach (var generator in CMake.Generators)
-            {
-                if (generator.Os == os) return generator.Name;
-            }
-            throw new Exception("Non supported OS");
-        }
 
         /// <summary>
         /// Gets CMake vars that can be used with the current OS
@@ -73,6 +68,24 @@ namespace Samurai.Models
                 args += $" -D{prop.Name}=\"{prop.Value}\"";
             }
             return args;
+        }
+
+        /// <summary>
+        /// Gets a CMake generator for current OS.
+        /// </summary>
+        /// <returns>OS ID</returns>
+        string GetGeneratorForCurrentOsOrDefault()
+        {
+            if (string.IsNullOrWhiteSpace(CMake.Generator))
+            {
+                string os = OS.GetCurrent();
+                foreach (var generator in CMake.Generators)
+                {
+                    if (generator.Os == os) return generator.Name;
+                }
+                throw new Exception("Non supported OS");
+            }
+            return CMake.Generator;
         }
 
         /// <summary>
@@ -111,13 +124,20 @@ namespace Samurai.Models
             }
             if (CMake.Generators != null)
             {
-                string generator = GetGeneratorForCurrentOs();
+                string generator = GetGeneratorForCurrentOsOrDefault();
                 args += $" -G\"{generator}\"";
             }
             args = args.Trim();
 
-            string workingDir = Path.Combine(LocalPath, CMake.WorkingDir);
-
+            string workingDir = null;
+            if (Path.IsPathRooted(CMake.WorkingDir))
+            {
+                workingDir = CMake.WorkingDir;
+            }
+            else
+            {
+                workingDir = Path.Combine(PackagePath, CMake.WorkingDir);
+            }
             if (!Directory.Exists(workingDir)) Directory.CreateDirectory(workingDir);
 
             Shell.RunProgramWithArgs("cmake", args, workingDir);
@@ -145,7 +165,16 @@ namespace Samurai.Models
                                 argsStr += $" {arg}";
                             }
                         }
-                        string workingDir = script.WorkingDir == null ? LocalPath : Path.Combine(LocalPath, script.WorkingDir);
+
+                        string workingDir = null;
+                        if (Path.IsPathRooted(script.WorkingDir))
+                        {
+                            workingDir = script.WorkingDir;
+                        }
+                        else
+                        {
+                            workingDir = Path.Combine(PackagePath, script.WorkingDir);
+                        }
                         string scriptPath = Path.Combine(Environment.CurrentDirectory, script.Name);
                         Shell.RunProgramWithArgs(scriptPath, argsStr.Trim(), workingDir);
                         return;
@@ -169,7 +198,16 @@ namespace Samurai.Models
                                 argsStr += $" {arg}";
                             }
                         }
-                        string workingDir = command.WorkingDir == null ? LocalPath : Path.Combine(LocalPath, command.WorkingDir);
+
+                        string workingDir = null;
+                        if (Path.IsPathRooted(command.WorkingDir))
+                        {
+                            workingDir = command.WorkingDir;
+                        }
+                        else
+                        {
+                            workingDir = Path.Combine(PackagePath, command.WorkingDir);
+                        }
                         Shell.RunProgramWithArgs(command.Name, argsStr.Trim(), workingDir);
                         return;
                     }
@@ -369,28 +407,60 @@ namespace Samurai.Models
         }
 
         /// <summary>
-        /// Path of this package in local vendor/ directory
-        /// or <see cref="Environment.CurrentDirectory"/> for <see cref="Config.Self"/>
+        /// Gets the full path of <see cref="InstallDir"/>. It considered the
+        /// base path of every relative path in the package.
         /// </summary>
-        string _localPath;
-        public string LocalPath
+        /// <returns>
+        /// If <see cref="InstallDir"/> is relative, returns the equivalent full path.
+        /// If <see cref="InstallDir"/> is null, empty, returns the absolute path
+        /// of the vendor folder
+        /// </returns>
+        string _basePath;
+        public string BasePath
         {
             get
             {
-                if (_localPath == null)
+                if (_basePath == null)
                 {
-                    if (string.IsNullOrEmpty(Name))
+                    if (!string.IsNullOrWhiteSpace(InstallDir))
                     {
-                        _localPath = Environment.CurrentDirectory;
+                        if (!Path.IsPathRooted(InstallDir))
+                        {
+                            _basePath = Path.GetFullPath(InstallDir);
+                        }
+                        else
+                        {
+                            _basePath = InstallDir;
+                        }
                     }
                     else
                     {
-                        _localPath = Path.Combine(Locations.VendorFolderPath, Name);
+                        if (GetInstallDir == null)
+                        {
+                            throw new Exception($@"{GetInstallDir} delegate is null. 
+                                Call method PostParsingInit() in {typeof(Config).Name} class");
+                        }
+                        _basePath = GetInstallDir();
                     }
                 }
-                return _localPath;
+                return _basePath;
             }
         }
 
+        /// <summary>
+        /// Full path of the package directory: <see cref="BasePath"/> + <see cref="Name"/>
+        /// </summary>
+        string _packagePath;
+        public string PackagePath
+        {
+            get
+            {
+                if (_packagePath == null)
+                {
+                    _packagePath = Path.Combine(BasePath, Name);
+                }
+                return _packagePath;
+            }
+        }
     }
 }

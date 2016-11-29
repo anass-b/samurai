@@ -85,7 +85,7 @@
     <Compile Include="src\Models\Config.cs" />
     <Compile Include="src\Controller.cs" />
     <Compile Include="src\Models\Package.cs" />
-    <Compile Include="src\Locations.cs" />
+    <Compile Include="src\Defaults.cs" />
     <Compile Include="src\Models\RemotePackage.cs" />
     <Compile Include="src\Program.cs" />
     <Compile Include="src\Models\Source.cs" />

@@ -19,16 +19,15 @@ namespace Samurai.Models
         public void Fetch()
         {
             Download();
-            Copy();
         }
 
         /// <summary>
-        /// Downloads this package into <see cref="GlobalPath"/>
+        /// Downloads this package into <see cref="Package.PackagePath"/>
         /// </summary>
         public void Download()
         {
             // We don't overwrite existing directories
-            if (Directory.Exists(GlobalPath)) return;
+            if (Directory.Exists(PackagePath)) return;
 
             Logs.PrintImportantStep($"Downloading {Name}");
 
@@ -49,8 +48,8 @@ namespace Samurai.Models
                         Console.Write($"Transfer progress: {progress.ReceivedObjects}/{progress.TotalObjects}");
                         return true;
                     };
-                    Repository.Clone(Source.Url, GlobalPath, options);
-                    Repository repo = new Repository(GlobalPath);
+                    Repository.Clone(Source.Url, PackagePath, options);
+                    var repo = new Repository(PackagePath);
                     if (Version != null)
                     {
                         string commitPointer = $"refs/tags/{Version}"; repo.Lookup<Commit>(commitPointer);
@@ -60,10 +59,10 @@ namespace Samurai.Models
                 }
                 else
                 {
-                    Shell.RunProgramWithArgs("git", $"clone {Source.Url} {GlobalPath}");
+                    Shell.RunProgramWithArgs("git", $"clone {Source.Url} {PackagePath}");
                     if (Version != null)
                     {
-                        Shell.RunProgramWithArgs("git", $"checkout tags/{Version}", GlobalPath);
+                        Shell.RunProgramWithArgs("git", $"checkout tags/{Version}", workingDirectory: PackagePath);
                     }
                 }
             }
@@ -71,8 +70,8 @@ namespace Samurai.Models
             {
                 string filename = Path.GetFileNameWithoutExtension(new Uri(Source.Url).AbsolutePath);
                 string archiveName = Guid.NewGuid() + Path.GetExtension(new Uri(Source.Url).AbsolutePath);
-                string downloadPath = Path.Combine(Locations.DotFolderPath, archiveName);
-                string extractedDirPath = Path.Combine(Locations.DotFolderPath, filename);
+                string downloadPath = Path.Combine(BasePath, archiveName);
+                string extractedDirPath = Path.Combine(BasePath, filename);
 
                 try
                 {
@@ -81,9 +80,9 @@ namespace Samurai.Models
 
                     ExtractionOptions options = new ExtractionOptions();
                     options.ExtractFullPath = true;
-                    ArchiveFactory.WriteToDirectory(downloadPath, Locations.DotFolderPath, options);
+                    ArchiveFactory.WriteToDirectory(downloadPath, BasePath, options);
 
-                    Directory.Move(extractedDirPath, GlobalPath);
+                    Directory.Move(extractedDirPath, PackagePath);
                 }
                 finally
                 {
@@ -100,12 +99,12 @@ namespace Samurai.Models
             }
             else if (Source.Type == Source.FileTypeName)
             {
-                Directory.CreateDirectory(GlobalPath);
+                Directory.CreateDirectory(PackagePath);
 
                 try
                 {
                     string filename = Path.GetFileName(new Uri(Source.Url).AbsolutePath);
-                    string downloadPath = Path.Combine(GlobalPath, filename);
+                    string downloadPath = Path.Combine(PackagePath, filename);
 
                     var webClient = new WebClient();
                     webClient.DownloadFile(Source.Url, downloadPath);
@@ -113,31 +112,11 @@ namespace Samurai.Models
                 catch
                 {
                     // Cleanup
-                    if (Directory.Exists(GlobalPath))
+                    if (Directory.Exists(PackagePath))
                     {
-                        Directory.Delete(GlobalPath);
+                        Directory.Delete(PackagePath);
                     }
                 }
-            }
-        }
-
-        /// <summary>
-        /// Copies this package from <see cref="GlobalPath"/> to <see cref="Package.LocalPath"/>
-        /// </summary>
-        void Copy()
-        {
-            // We don't overwrite existing directories
-            if (Directory.Exists(LocalPath)) return;
-
-            Logs.PrintImportantStep($"Copying {Name}");
-
-            try
-            {
-                FileSystem.DirectoryCopy(GlobalPath, LocalPath, true);
-            }
-            catch (Exception e)
-            {
-                Logs.PrintException(e);
             }
         }
 
@@ -153,7 +132,7 @@ namespace Samurai.Models
             // Patch absolute path
             string patchPath = Path.Combine(Environment.CurrentDirectory, Patch);
             // Apply patch using git cli, LibGit2Sharp doesn't support applying patches yet
-            Shell.RunProgramWithArgs("git", $"apply {patchPath}", LocalPath);
+            Shell.RunProgramWithArgs("git", $"apply {patchPath}", workingDirectory: PackagePath);
         }
 
         public override void FixDirSeparatorInPaths()
@@ -198,29 +177,6 @@ namespace Samurai.Models
                 {
                     _version = value;
                 }
-            }
-        }
-
-        /// <summary>
-        /// The package of the package inside ~/.samurai folder
-        /// </summary>
-        string _globalPath;
-        public string GlobalPath
-        {
-            get
-            {
-                if (_globalPath == null)
-                {
-                    if (string.IsNullOrEmpty(Version))
-                    {
-                        _globalPath = Path.Combine(Locations.DotFolderPath, Name);
-                    }
-                    else
-                    {
-                        _globalPath = Path.Combine(Locations.DotFolderPath, $"{Name}@{Version}");
-                    }
-                }
-                return _globalPath;
             }
         }
     }

@@ -2,18 +2,13 @@
 using Samurai.Models;
 using System;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace Samurai
 {
     public class Controller
     {
-        readonly Config _config;
-
-        public Controller(Config config)
-        {
-            _config = config;
-            _config.FixDirSeparatorInPaths();
-        }
+        Config _config;
 
         CommandOption AddVarsOption(CommandLineApplication target)
         {
@@ -25,45 +20,85 @@ namespace Samurai
             return target.Option("--self|-s", "Run self section", CommandOptionType.NoValue);
         }
 
+        CommandOption AddConfigFileOption(CommandLineApplication target)
+        {
+            return target.Option("--config|-c", "Config file", CommandOptionType.SingleValue); 
+        }
+
+        string GetConfigFileNameOrDefault(CommandOption option)
+        {
+            if (option.HasValue())
+            {
+                return Path.GetFullPath(option.Value());
+            }
+            else
+            {
+                return Path.Combine(Environment.CurrentDirectory, Defaults.ConfigFileName);
+            }
+        }
+
+        void ParseConfig(CommandOption configFile, CommandOption vars)
+        {
+            string configFilePath = GetConfigFileNameOrDefault(configFile);
+            try
+            {
+                _config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(configFilePath));
+                _config.PostParsingInit(vars.Value());
+            }
+            catch (FileNotFoundException)
+            {
+                Logs.PrintException($"{configFilePath} not found.");
+                Environment.Exit(1);
+            }
+            catch (Exception)
+            {
+                Logs.PrintException($"Cannot open {configFilePath}.");
+                Environment.Exit(1);
+            }
+        }
+
         public void AddFetchCli(CommandLineApplication cli)
         {
-            CommandOption vars = null;
+            CommandOption vars = null, configFile = null;
             cli.Command("fetch", (command) =>
             {
+                configFile = AddConfigFileOption(command);
                 vars = AddVarsOption(command);
             })
             .OnExecute(() =>
             {
-                _config.AssignVars(vars.Value());
+                ParseConfig(configFile: configFile, vars: vars);
                 return Fetch();
             });
         }
 
         public void AddPatchCli(CommandLineApplication cli)
         {
-            CommandOption vars = null;
+            CommandOption vars = null, configFile = null;
             cli.Command("patch", (command) =>
             {
+                configFile = AddConfigFileOption(command);
                 vars = AddVarsOption(command);
             })
             .OnExecute(() =>
             {
-                _config.AssignVars(vars.Value());
+                ParseConfig(configFile: configFile, vars: vars);
                 return Patch();
             });
         }
 
         public void AddCMakeCli(CommandLineApplication cli)
         {
-            CommandOption vars = null, self = null;
+            CommandOption vars = null, self = null, configFile = null;
             cli.Command("cmake", (command) =>
             {
+                configFile = AddConfigFileOption(command);
                 vars = AddVarsOption(command);
                 self = AddSelfOption(command);
             })
             .OnExecute(() =>
             {
-                _config.AssignVars(vars.Value());
+                ParseConfig(configFile: configFile, vars: vars);
                 if (self.HasValue())
                 {
                     return SelfCMake();
@@ -77,15 +112,16 @@ namespace Samurai
 
         public void AddBuildCli(CommandLineApplication cli)
         {
-            CommandOption vars = null, self = null;
+            CommandOption vars = null, self = null, configFile = null;
             cli.Command("build", (command) =>
             {
+                configFile = AddConfigFileOption(command);
                 vars = AddVarsOption(command);
                 self = AddSelfOption(command);
             })
             .OnExecute(() =>
             {
-                _config.AssignVars(vars.Value());
+                ParseConfig(configFile: configFile, vars: vars);
                 if (self.HasValue())
                 {
                     return SelfBuild();
@@ -99,30 +135,16 @@ namespace Samurai
 
         public void AddAllCli(CommandLineApplication cli)
         {
-            CommandOption vars = null;
+            CommandOption vars = null, configFile = null;
             cli.Command("all", (command) =>
             {
+                configFile = AddConfigFileOption(command);
                 vars = AddVarsOption(command);
             })
             .OnExecute(() =>
             {
-                _config.AssignVars(vars.Value());
+                ParseConfig(configFile: configFile, vars: vars);
                 return All();
-            });
-        }
-
-        public void AddZombiesCli(CommandLineApplication cli)
-        {
-            CommandOption vars = null, delete = null;
-            cli.Command("zombies", (command) =>
-            {
-                vars = AddVarsOption(command);
-                delete = command.Option("--delete|-d", "Delete zombies", CommandOptionType.NoValue);
-            })
-            .OnExecute(() =>
-            {
-                _config.AssignVars(vars.Value());
-                return Zombies(delete.HasValue());
             });
         }
 
@@ -149,16 +171,6 @@ namespace Samurai
         {
             try
             {
-                if (!Directory.Exists(Locations.DotFolderPath))
-                {
-                    Directory.CreateDirectory(Locations.DotFolderPath);
-                }
-
-                if (!Directory.Exists(Locations.VendorFolderPath))
-                {
-                    Directory.CreateDirectory(Locations.VendorFolderPath);
-                }
-
                 foreach (var dep in _config.Dependencies)
                 {
                     dep.Fetch();
@@ -243,60 +255,6 @@ namespace Samurai
             try
             {
                 _config.Self.RunBuild();
-                return 0;
-            }
-            catch (Exception e)
-            {
-                Logs.PrintException(e);
-                return 1;
-            }
-        }
-
-        /// <summary>
-        /// Gets package that are present in local vendor/ directory
-        /// but are not mentioned as a dependency in samurai.json file
-        /// </summary>
-        /// <param name="delete">Tells whether to delete the zombie directories</param>
-        int Zombies(bool delete)
-        {
-            try
-            {
-                string[] dirs = Directory.GetDirectories(Locations.VendorFolderPath);
-                foreach (var dir in dirs)
-                {
-                    string resource = Path.GetFileName(dir);
-
-                    bool found = false;
-                    foreach (var dep in _config.Dependencies)
-                    {
-                        if (dep.Name == resource)
-                        {
-                            found = true;
-                            break;
-                        }
-                    }
-
-                    if (!found)
-                    {
-                        if (delete)
-                        {
-                            Logs.PrintImportantStep($"Deleting: {dir}");
-                            try
-                            {
-                                Directory.Delete(dir, true);
-                            }
-                            catch (Exception e)
-                            {
-                                Logs.PrintException(e);
-                                Console.WriteLine($"Couldn't delete: {dir}");
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine(resource);
-                        }
-                    }
-                }
                 return 0;
             }
             catch (Exception e)

@@ -12,7 +12,7 @@ namespace Samurai
 
         public static void PrintException(Exception e)
         {
-            PrintException(e.Message);
+            PrintException($"{e.GetType().Name}: {e.Message}");
         }
 
         public static void PrintImportantStep(string message)
