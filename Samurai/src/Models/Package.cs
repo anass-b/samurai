@@ -118,7 +118,13 @@ namespace Samurai.Models
             }
 
             Logs.PrintImportantStep($"Running cmake {Name}");
-            
+
+            if (Path.IsPathRooted(CMake.SrcDir))
+            {
+                throw new Exception("script.workingDir cannot be a full path "
+                                    + $"it should be set relatively to {PackagePath}");
+            }
+
             string args = $"{CMake.SrcDir} ";
             if (CMake.Vars != null)
             {
@@ -179,15 +185,12 @@ namespace Samurai.Models
                             }
                         }
 
-                        string workingDir = null;
                         if (Path.IsPathRooted(script.WorkingDir))
                         {
-                            workingDir = script.WorkingDir;
+                            throw new Exception("script.workingDir cannot be a full path "
+                                                + $"it should be set relatively to {PackagePath}");
                         }
-                        else
-                        {
-                            workingDir = Path.Combine(PackagePath, script.WorkingDir);
-                        }
+                        string workingDir = Path.Combine(PackagePath, script.WorkingDir);
                         string scriptPath = Path.Combine(Environment.CurrentDirectory, script.Name);
                         Shell.RunProgramWithArgs(scriptPath, argsStr.Trim(), workingDir);
                         return;
@@ -212,15 +215,12 @@ namespace Samurai.Models
                             }
                         }
 
-                        string workingDir = null;
                         if (Path.IsPathRooted(command.WorkingDir))
                         {
-                            workingDir = command.WorkingDir;
+                            throw new Exception("command.workingDir cannot be a full path "
+                                                + $"it should be set relatively to {PackagePath}");
                         }
-                        else
-                        {
-                            workingDir = Path.Combine(PackagePath, command.WorkingDir);
-                        }
+                        string workingDir = Path.Combine(PackagePath, command.WorkingDir);
                         Shell.RunProgramWithArgs(command.Name, argsStr.Trim(), workingDir);
                         return;
                     }
