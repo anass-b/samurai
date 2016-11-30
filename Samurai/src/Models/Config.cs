@@ -26,6 +26,8 @@ namespace Samurai.Models
                 Self.IsSelf = true;
                 Self.GetInstallDir = GetInstallDir;
             }
+
+            AssignVars(varsStr);
         }
 
         string GetInstallDir()

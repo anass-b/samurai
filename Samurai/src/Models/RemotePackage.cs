@@ -95,6 +95,10 @@ namespace Samurai.Models
                         Archive.ExtractZip(downloadPath, destination);
                     }
                 }
+                catch (Exception e)
+                {
+                    Logs.PrintException(e);
+                }
                 finally
                 {
                     // Cleanup

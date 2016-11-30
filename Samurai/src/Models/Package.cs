@@ -172,29 +172,35 @@ namespace Samurai.Models
             {
                 foreach (var script in Build.Scripts)
                 {
-                    if (script.Os == os)
+                    if (!string.IsNullOrWhiteSpace(script.Os) && script.Os != os) continue;
+                    if (string.IsNullOrWhiteSpace(script.WorkingDir))
                     {
-                        Logs.PrintImportantStep($"Building {Name}");
-
-                        string argsStr = "";
-                        if (script.Args != null)
-                        {
-                            foreach (var arg in script.Args)
-                            {
-                                argsStr += $" {arg}";
-                            }
-                        }
-
-                        if (Path.IsPathRooted(script.WorkingDir))
-                        {
-                            throw new Exception("script.workingDir cannot be a full path "
-                                                + $"it should be set relatively to {PackagePath}");
-                        }
-                        string workingDir = Path.Combine(PackagePath, script.WorkingDir);
-                        string scriptPath = Path.Combine(Environment.CurrentDirectory, script.Name);
-                        Shell.RunProgramWithArgs(scriptPath, argsStr.Trim(), workingDir);
-                        return;
+                        throw new Exception("build.script.workingDir cannot be null or empty");
                     }
+                    if (string.IsNullOrWhiteSpace(script.Name))
+                    {
+                        throw new Exception("build.script.name cannot be null or empty");
+                    }
+
+                    Logs.PrintImportantStep($"Building {Name}");
+
+                    string argsStr = "";
+                    if (script.Args != null)
+                    {
+                        foreach (var arg in script.Args)
+                        {
+                            argsStr += $" {arg}";
+                        }
+                    }
+
+                    if (Path.IsPathRooted(script.WorkingDir))
+                    {
+                        throw new Exception("script.workingDir cannot be a full path "
+                                            + $"it should be set relatively to {PackagePath}");
+                    }
+                    string workingDir = Path.Combine(PackagePath, script.WorkingDir);
+                    string scriptPath = Path.Combine(Environment.CurrentDirectory, script.Name);
+                    Shell.RunProgramWithArgs(scriptPath, argsStr.Trim(), workingDir);
                 }
             }
 
@@ -202,28 +208,35 @@ namespace Samurai.Models
             {
                 foreach (var command in Build.Commands)
                 {
-                    if (command.Os == os)
+                    // Check requirements
+                    if (!string.IsNullOrWhiteSpace(command.Os) && command.Os != os) continue;
+                    if (string.IsNullOrWhiteSpace(command.WorkingDir))
                     {
-                        Logs.PrintImportantStep($"Building {Name}");
-
-                        string argsStr = "";
-                        if (command.Args != null)
-                        {
-                            foreach (var arg in command.Args)
-                            {
-                                argsStr += $" {arg}";
-                            }
-                        }
-
-                        if (Path.IsPathRooted(command.WorkingDir))
-                        {
-                            throw new Exception("command.workingDir cannot be a full path "
-                                                + $"it should be set relatively to {PackagePath}");
-                        }
-                        string workingDir = Path.Combine(PackagePath, command.WorkingDir);
-                        Shell.RunProgramWithArgs(command.Name, argsStr.Trim(), workingDir);
-                        return;
+                        throw new Exception("build.command.workingDir cannot be null or empty");
                     }
+                    if (string.IsNullOrWhiteSpace(command.Name))
+                    {
+                        throw new Exception("build.command.name cannot be null or empty");
+                    }
+
+                    Logs.PrintImportantStep($"Building {Name}");
+
+                    string argsStr = "";
+                    if (command.Args != null)
+                    {
+                        foreach (var arg in command.Args)
+                        {
+                            argsStr += $" {arg}";
+                        }
+                    }
+
+                    if (Path.IsPathRooted(command.WorkingDir))
+                    {
+                        throw new Exception("command.workingDir cannot be a full path "
+                                            + $"it should be set relatively to {PackagePath}");
+                    }
+                    string workingDir = Path.Combine(PackagePath, command.WorkingDir);
+                    Shell.RunProgramWithArgs(command.Name, argsStr.Trim(), workingDir);
                 }
             }
         }
@@ -385,13 +398,22 @@ namespace Samurai.Models
                         {
                             script.WorkingDir = ReplaceVars(script.WorkingDir, tuples);
                         }
-                        script.Os = ReplaceVars(script.Os, tuples);
-                        script.Name = ReplaceVars(script.Name, tuples);
+                        if (!string.IsNullOrWhiteSpace(script.Os))
+                        {
+                            script.Os = ReplaceVars(script.Os, tuples);
+                        }
+                        if (!string.IsNullOrWhiteSpace(script.Name))
+                        {
+                            script.Name = ReplaceVars(script.Name, tuples);
+                        }
                         if (script.Args != null)
                         {
                             for (var i = 0; i < script.Args.Count; i++)
                             {
-                                script.Args[i] = ReplaceVars(script.Args[i], tuples);
+                                if (!string.IsNullOrWhiteSpace(script.Args[i]))
+                                {
+                                    script.Args[i] = ReplaceVars(script.Args[i], tuples);
+                                }
                             }
                         }
                     }
@@ -405,13 +427,22 @@ namespace Samurai.Models
                         {
                             command.WorkingDir = ReplaceVars(command.WorkingDir, tuples);
                         }
-                        command.Os = ReplaceVars(command.Os, tuples);
-                        command.Name = ReplaceVars(command.Name, tuples);
+                        if (!string.IsNullOrWhiteSpace(command.Os))
+                        {
+                            command.Os = ReplaceVars(command.Os, tuples);
+                        }
+                        if (!string.IsNullOrWhiteSpace(command.Name))
+                        {
+                            command.Name = ReplaceVars(command.Name, tuples);
+                        }
                         if (command.Args != null)
                         {
                             for (var i = 0; i < command.Args.Count; i++)
                             {
-                                command.Args[i] = ReplaceVars(command.Args[i], tuples);
+                                if (!string.IsNullOrWhiteSpace(command.Args[i]))
+                                {
+                                    command.Args[i] = ReplaceVars(command.Args[i], tuples);
+                                }
                             }
                         }
                     }

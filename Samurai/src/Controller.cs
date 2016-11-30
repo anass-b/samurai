@@ -169,6 +169,11 @@ namespace Samurai
 
         int Fetch()
         {
+            if (!Directory.Exists(_config.BasePath))
+            {
+                Directory.CreateDirectory(_config.BasePath);
+            }
+
             try
             {
                 foreach (var dep in _config.Dependencies)
