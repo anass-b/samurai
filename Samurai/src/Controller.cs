@@ -232,7 +232,10 @@ namespace Samurai
         {
             try
             {
-                _config.Self.RunCMake();
+                if (_config.Self != null)
+                {
+                    _config.Self.RunCMake();
+                }
                 return 0;
             }
             catch (Exception e)
@@ -263,7 +266,10 @@ namespace Samurai
         {
             try
             {
-                _config.Self.RunBuild();
+                if (_config.Self != null)
+                {
+                    _config.Self.RunBuild();
+                }
                 return 0;
             }
             catch (Exception e)
