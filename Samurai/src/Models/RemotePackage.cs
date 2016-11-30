@@ -1,6 +1,4 @@
 ﻿using LibGit2Sharp;
-using SharpCompress.Archives;
-using SharpCompress.Readers;
 using System;
 using System.IO;
 using System.Net;
