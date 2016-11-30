@@ -99,14 +99,6 @@ namespace Samurai.Models
                 {
                     Logs.PrintException(e);
                 }
-                finally
-                {
-                    // Cleanup
-                    if (File.Exists(downloadPath))
-                    {
-                        File.Delete(downloadPath);
-                    }
-                }
             }
             else if (Source.Type == Source.FileTypeName)
             {

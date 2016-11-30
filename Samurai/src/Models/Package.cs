@@ -87,18 +87,14 @@ namespace Samurai.Models
         /// Gets a CMake generator for current OS.
         /// </summary>
         /// <returns>OS ID</returns>
-        string GetGeneratorForCurrentOsOrDefault()
+        string GetGeneratorForCurrentOs()
         {
-            if (string.IsNullOrWhiteSpace(CMake.Generator))
+            string os = OS.GetCurrent();
+            foreach (var generator in CMake.Generators)
             {
-                string os = OS.GetCurrent();
-                foreach (var generator in CMake.Generators)
-                {
-                    if (generator.Os == os) return generator.Name;
-                }
-                throw new Exception("Non supported OS");
+                if (generator.Os == os) return generator.Name;
             }
-            return CMake.Generator;
+            throw new Exception("Non supported OS");
         }
 
         /// <summary>
@@ -141,11 +137,18 @@ namespace Samurai.Models
                     args += $" {arg}";
                 }
             }
-            if (CMake.Generators != null)
+
+            // CMake generator
+            if (!string.IsNullOrWhiteSpace(CMake.Generator))
             {
-                string generator = GetGeneratorForCurrentOsOrDefault();
+                args += $" -G\"{CMake.Generator}\"";
+            }
+            else if (CMake.Generators != null)
+            {
+                string generator = GetGeneratorForCurrentOs();
                 args += $" -G\"{generator}\"";
             }
+
             args = args.Trim();
 
             string workingDir = null;
