@@ -50,9 +50,13 @@ namespace Samurai
                 Logs.PrintException($"{configFilePath} not found.");
                 Environment.Exit(1);
             }
-            catch (Exception)
+            catch (JsonSerializationException e)
             {
-                Logs.PrintException($"Cannot open {configFilePath}.");
+                Logs.PrintException(e);
+            }
+            catch (Exception e)
+            {
+                Logs.PrintException(e);
                 Environment.Exit(1);
             }
         }
