@@ -11,7 +11,7 @@ namespace Samurai.Models
         public List<RemotePackage> Dependencies { get; set; }
         public Package Self { get; set; }
 
-        public void PostParsingInit(string varsStr)
+        public void PostParsingInit()
         {
             FixDirSeparatorInPaths();
 
@@ -26,8 +26,6 @@ namespace Samurai.Models
                 Self.IsSelf = true;
                 Self.GetInstallDir = GetInstallDir;
             }
-
-            AssignVars(varsStr);
         }
 
         string GetInstallDir()
@@ -37,6 +35,11 @@ namespace Samurai.Models
 
         void FixDirSeparatorInPaths()
         {
+            if (InstallDir != null)
+            {
+                InstallDir = InstallDir.ReplaceWrongDirSepChar();
+            }
+
             if (Dependencies != null)
             {
                 foreach (var dep in Dependencies)
@@ -48,22 +51,6 @@ namespace Samurai.Models
             if (Self != null)
             {
                 Self.FixDirSeparatorInPaths();
-            }
-        }
-
-        void AssignVars(string varsStr)
-        {
-            if (Dependencies != null)
-            {
-                foreach (var dep in Dependencies)
-                {
-                    dep.AssignVars(varsStr);
-                }
-            }
-
-            if (Self != null)
-            {
-                Self.AssignVars(varsStr);
             }
         }
 

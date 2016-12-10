@@ -3,6 +3,7 @@ using Samurai.Models;
 using System;
 using System.IO;
 using Newtonsoft.Json;
+using System.Text.RegularExpressions;
 
 namespace Samurai
 {
@@ -42,8 +43,10 @@ namespace Samurai
             string configFilePath = GetConfigFileNameOrDefault(configFile);
             try
             {
-                _config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(configFilePath));
-                _config.PostParsingInit(vars.Value());
+                var text = File.ReadAllText(configFilePath);
+                text = AssignVars(text, vars.Value());
+                _config = JsonConvert.DeserializeObject<Config>(text);
+                _config.PostParsingInit();
             }
             catch (FileNotFoundException)
             {
@@ -59,6 +62,71 @@ namespace Samurai
                 Logs.PrintException(e);
                 Environment.Exit(1);
             }
+        }
+
+        string EscapeBackslash(string str)
+        {
+            return str.Replace(@"\", @"\\");
+        }
+
+        /// <summary>
+        /// Replaces strings that look like ${VAR} with their values
+        /// using <paramref name="tuples"/>
+        /// </summary>
+        /// <returns>Final string with replaced vars</returns>
+        /// <param name="str">String to be processed</param>
+        /// <param name="tuples">Tuples of Var/Value separated by '=' character</param>
+        protected string ReplaceVars(string str, string[] tuples)
+        {
+            if (str == null || str.Length == 0) return null;
+            if (tuples == null || tuples.Length == 0) return null;
+
+            foreach (string tuple in tuples)
+            {
+                string[] values = tuple.Split('=');
+                string var = "${" + values[0] + "}";
+                str = str.Replace(var, EscapeBackslash(values[1]));
+            }
+            return str;
+        }
+
+        /// <summary>
+        /// Replaces strings that look like ${VAR} with their values from the CLI option --vars
+        /// and @{VAR} with values from the environment
+        /// on the whole config
+        /// </summary>
+        /// <param name="text">Config text content</param>
+        /// <param name="varsStr">Vars from command line argument --vars</param>
+        public string AssignVars(string text, string varsStr)
+        {
+            if (!string.IsNullOrWhiteSpace(varsStr))
+            {
+                string[] tuples = varsStr.Split(';');
+                if (tuples.Length == 0) return text;
+
+                text = ReplaceVars(text, tuples);
+            }
+
+            var regex = new Regex("@{(.*)}", RegexOptions.IgnoreCase);
+            var match = regex.Match(text);
+            while (match.Success)
+            {
+                var decoratedVar = match.Value;
+                
+                // Extract the variable without decoration
+                var var = decoratedVar.Substring(2, decoratedVar.Length - 3);
+
+                var envValue = Environment.GetEnvironmentVariable(var);
+                if (envValue != null)
+                {
+                    // Replace the decorated variable with the value from the environement
+                    text = text.Replace(decoratedVar, EscapeBackslash(envValue));
+                }
+
+                match = match.NextMatch();
+            }
+
+            return text;
         }
 
         public void AddFetchCli(CommandLineApplication cli)

@@ -14,15 +14,10 @@ namespace Samurai.Models
     {
         public Source Source { get; set; }
 
-        public void Fetch()
-        {
-            Download();
-        }
-
         /// <summary>
         /// Downloads this package into <see cref="Package.PackagePath"/>
         /// </summary>
-        public void Download()
+        public void Fetch()
         {
             // We don't overwrite existing directories
             if (Directory.Exists(PackagePath)) return;
@@ -141,23 +136,8 @@ namespace Samurai.Models
             base.FixDirSeparatorInPaths();
             if (Patch != null)
             {
-                Patch = ReplaceWrongDirSepChar(Patch, GetWrongDirSepChar());
+                Patch = Patch.ReplaceWrongDirSepChar();
             }
-        }
-
-        public override void AssignVars(string varsStr)
-        {
-            base.AssignVars(varsStr);
-
-            if (varsStr == null || varsStr.Length == 0) return;
-
-            string[] tuples = varsStr.Split(';');
-            if (tuples.Length == 0) return;
-
-            Name = ReplaceVars(Name, tuples);
-            Version = ReplaceVars(Version, tuples);
-
-            Source.Url = ReplaceVars(Source.Url, tuples);
         }
 
         /// <summary>
