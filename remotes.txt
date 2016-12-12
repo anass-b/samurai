@@ -1,2 +1,0 @@
-https://github.com/anass-b/samurai.git
-ssh://git@bitbucket.org/anassb/samurai.git
